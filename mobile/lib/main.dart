@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'jobs_screen.dart';
+import 'login_screen.dart';
+import 'register_screen.dart';
 
 void main() {
   runApp(const JobHubAIApp());
@@ -98,7 +99,7 @@ class WelcomeScreen extends StatelessWidget {
                         onPressed: () {
                           Navigator.push(
                             context,
-                            MaterialPageRoute(builder: (context) => const JobsScreen()),
+                            MaterialPageRoute(builder: (context) => const LoginScreen()),
                           );
                         },
                         style: ElevatedButton.styleFrom(
@@ -111,13 +112,14 @@ class WelcomeScreen extends StatelessWidget {
                           elevation: 8,
                           shadowColor: const Color(0xFF00F0FF).withOpacity(0.6),
                         ),
-                        child: const Text('Find a Job', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                        child: const Text('Log In', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                       ),
                       const SizedBox(height: 16),
                       OutlinedButton(
                         onPressed: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Employer portal coming soon!')),
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => const RegisterScreen()),
                           );
                         },
                         style: OutlinedButton.styleFrom(
@@ -128,7 +130,7 @@ class WelcomeScreen extends StatelessWidget {
                             borderRadius: BorderRadius.circular(12),
                           ),
                         ),
-                        child: const Text('Post a Job', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                        child: const Text('Sign Up', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                       ),
                     ],
                   ),

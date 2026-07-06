@@ -3,6 +3,15 @@ import Link from 'next/link';
 export default function Home() {
   return (
     <main style={{ padding: '4rem', maxWidth: '1200px', margin: '0 auto' }}>
+      <nav style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginBottom: '4rem' }}>
+        <Link href="/login" style={{ color: 'white', textDecoration: 'none', padding: '0.75rem 1.5rem', fontWeight: 'bold' }}>
+          Log In
+        </Link>
+        <Link href="/register" style={{ backgroundColor: 'var(--primary-color)', color: 'white', textDecoration: 'none', padding: '0.75rem 1.5rem', borderRadius: '8px', fontWeight: 'bold' }}>
+          Sign Up
+        </Link>
+      </nav>
+
       <header style={{ textAlign: 'center', marginBottom: '4rem' }}>
         <h1 style={{ fontSize: '4rem', fontWeight: 800, margin: '0 0 1rem 0' }}>
           Welcome to <span className="text-gradient">Job Hub AI</span>
