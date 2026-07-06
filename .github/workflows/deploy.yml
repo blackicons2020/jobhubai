@@ -23,4 +23,6 @@ jobs:
           cd /home/${{ secrets.EC2_USERNAME }}/jobhubai
           git pull origin main
           echo "GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}" > ai_service/.env
+          echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" > .env
+          echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> .env
           docker compose up -d --build
