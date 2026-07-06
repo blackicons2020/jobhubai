@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'jobs_screen.dart';
 
 void main() {
   runApp(const JobHubAIApp());
@@ -94,7 +95,12 @@ class WelcomeScreen extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       ElevatedButton(
-                        onPressed: () {},
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => const JobsScreen()),
+                          );
+                        },
                         style: ElevatedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 16),
                           backgroundColor: const Color(0xFF6366F1),
@@ -109,7 +115,11 @@ class WelcomeScreen extends StatelessWidget {
                       ),
                       const SizedBox(height: 16),
                       OutlinedButton(
-                        onPressed: () {},
+                        onPressed: () {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Employer portal coming soon!')),
+                          );
+                        },
                         style: OutlinedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 16),
                           side: const BorderSide(color: Color(0xFF00F0FF)),

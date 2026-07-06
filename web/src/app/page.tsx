@@ -1,3 +1,5 @@
+import Link from 'next/link';
+
 export default function Home() {
   return (
     <main style={{ padding: '4rem', maxWidth: '1200px', margin: '0 auto' }}>
@@ -16,7 +18,9 @@ export default function Home() {
           <p style={{ color: 'var(--text-secondary)', marginBottom: '2rem' }}>
             Generate ATS-optimized resumes, custom cover letters, and get instant AI matching scores for your dream jobs.
           </p>
-          <button className="btn-primary">Find a Job</button>
+          <Link href="/jobs">
+            <button className="btn-primary">Find a Job</button>
+          </Link>
         </div>
 
         <div className="glass-panel">
@@ -24,7 +28,9 @@ export default function Home() {
           <p style={{ color: 'var(--text-secondary)', marginBottom: '2rem' }}>
             Automate your hiring pipeline. Let our AI rank and shortlist the absolute best candidates for your open roles.
           </p>
-          <button className="btn-primary" style={{ background: 'transparent', border: '1px solid var(--secondary-color)', boxShadow: 'none' }}>Post a Job</button>
+          <Link href="/jobs/create">
+            <button className="btn-primary" style={{ background: 'transparent', border: '1px solid var(--secondary-color)', boxShadow: 'none' }}>Post a Job</button>
+          </Link>
         </div>
       </div>
     </main>
