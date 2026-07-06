@@ -199,7 +199,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       style: TextStyle(color: Colors.white.withOpacity(0.7)),
                     ),
                     GestureDetector(
-                      onPressed: () {
+                      onTap: () {
                         Navigator.push(
                           context,
                           MaterialPageRoute(builder: (context) => const RegisterScreen()),

@@ -5,7 +5,7 @@ import Link from 'next/link';
 export default function RegisterPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState('CANDIDATE'); // CANDIDATE or EMPLOYER
+  const [role, setRole] = useState('JOB_SEEKER'); // JOB_SEEKER or EMPLOYER
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -56,8 +56,8 @@ export default function RegisterPage() {
             <div style={{ display: 'flex', gap: '1rem' }}>
               <button 
                 type="button"
-                onClick={() => setRole('CANDIDATE')}
-                style={{ flex: 1, padding: '1rem', borderRadius: '12px', border: role === 'CANDIDATE' ? '2px solid var(--primary-color)' : '1px solid rgba(255, 255, 255, 0.1)', backgroundColor: role === 'CANDIDATE' ? 'rgba(99, 102, 241, 0.1)' : 'rgba(255, 255, 255, 0.05)', color: 'white', cursor: 'pointer', fontWeight: role === 'CANDIDATE' ? 'bold' : 'normal' }}
+                onClick={() => setRole('JOB_SEEKER')}
+                style={{ flex: 1, padding: '1rem', borderRadius: '12px', border: role === 'JOB_SEEKER' ? '2px solid var(--primary-color)' : '1px solid rgba(255, 255, 255, 0.1)', backgroundColor: role === 'JOB_SEEKER' ? 'rgba(99, 102, 241, 0.1)' : 'rgba(255, 255, 255, 0.05)', color: 'white', cursor: 'pointer', fontWeight: role === 'JOB_SEEKER' ? 'bold' : 'normal' }}
               >
                 Job Seeker
               </button>

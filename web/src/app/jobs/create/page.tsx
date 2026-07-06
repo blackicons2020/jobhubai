@@ -1,89 +1,135 @@
-"use client";
+'use client';
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 
 export default function CreateJobPage() {
+  const router = useRouter();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [location, setLocation] = useState('');
   const [salary, setSalary] = useState('');
   const [isRemote, setIsRemote] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleCreateJob = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Connect to NestJS API
-    console.log("Posting job...");
+    setLoading(true);
+    setError('');
+
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('You must be logged in as an Employer to post a job.');
+      }
+
+      const res = await fetch('http://13.60.192.118:3001/jobs', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          title,
+          description,
+          location,
+          salary,
+          isRemote
+        }),
+      });
+
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.message || 'Failed to create job');
+      }
+
+      router.push('/jobs');
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <main style={{ padding: '4rem', maxWidth: '800px', margin: '0 auto' }}>
-      <div className="glass-panel">
-        <h1 style={{ fontSize: '2.5rem', marginBottom: '2rem', textAlign: 'center' }} className="text-gradient">
-          Post a New Job
+    <main style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem' }}>
+      <div className="glass-panel" style={{ width: '100%', maxWidth: '600px', padding: '3rem 2rem' }}>
+        <h1 style={{ fontSize: '2.5rem', fontWeight: 800, textAlign: 'center', marginBottom: '0.5rem' }}>
+          Post a <span className="text-gradient">New Job</span>
         </h1>
+        <p style={{ color: 'var(--text-secondary)', textAlign: 'center', marginBottom: '2rem' }}>
+          Find the perfect AI talent for your team
+        </p>
 
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-          <input 
-            type="text" 
-            placeholder="Job Title (e.g. Senior Backend Engineer)" 
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            style={inputStyle}
-            required
-          />
-          
-          <div style={{ display: 'flex', gap: '1rem' }}>
+        {error && (
+          <div style={{ backgroundColor: 'rgba(255, 0, 0, 0.1)', border: '1px solid red', color: '#ff4d4d', padding: '1rem', borderRadius: '8px', marginBottom: '1.5rem', textAlign: 'center' }}>
+            {error}
+          </div>
+        )}
+
+        <form onSubmit={handleCreateJob} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+          <div>
+            <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>Job Title</label>
             <input 
               type="text" 
-              placeholder="Location (e.g. San Francisco, CA)" 
-              value={location}
-              onChange={(e) => setLocation(e.target.value)}
-              style={inputStyle}
-            />
-            <input 
-              type="text" 
-              placeholder="Salary Range (e.g. $120k - $150k)" 
-              value={salary}
-              onChange={(e) => setSalary(e.target.value)}
-              style={inputStyle}
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              required
+              style={{ width: '100%', padding: '1rem', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.1)', backgroundColor: 'rgba(255, 255, 255, 0.05)', color: 'white', fontSize: '1rem', outline: 'none' }}
+              placeholder="e.g. Senior AI Engineer"
             />
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 0' }}>
+          <div>
+            <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>Job Description</label>
+            <textarea 
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              required
+              rows={5}
+              style={{ width: '100%', padding: '1rem', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.1)', backgroundColor: 'rgba(255, 255, 255, 0.05)', color: 'white', fontSize: '1rem', outline: 'none', resize: 'vertical' }}
+              placeholder="Describe the responsibilities, requirements, and benefits..."
+            />
+          </div>
+
+          <div style={{ display: 'flex', gap: '1rem' }}>
+            <div style={{ flex: 1 }}>
+              <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>Location</label>
+              <input 
+                type="text" 
+                value={location}
+                onChange={(e) => setLocation(e.target.value)}
+                style={{ width: '100%', padding: '1rem', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.1)', backgroundColor: 'rgba(255, 255, 255, 0.05)', color: 'white', fontSize: '1rem', outline: 'none' }}
+                placeholder="e.g. San Francisco, CA"
+              />
+            </div>
+            <div style={{ flex: 1 }}>
+              <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>Salary Range</label>
+              <input 
+                type="text" 
+                value={salary}
+                onChange={(e) => setSalary(e.target.value)}
+                style={{ width: '100%', padding: '1rem', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.1)', backgroundColor: 'rgba(255, 255, 255, 0.05)', color: 'white', fontSize: '1rem', outline: 'none' }}
+                placeholder="e.g. $120k - $150k"
+              />
+            </div>
+          </div>
+
+          <label style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer' }}>
             <input 
               type="checkbox" 
-              id="isRemote"
               checked={isRemote}
               onChange={(e) => setIsRemote(e.target.checked)}
-              style={{ width: '20px', height: '20px', accentColor: 'var(--primary-color)' }}
+              style={{ width: '20px', height: '20px', cursor: 'pointer' }}
             />
-            <label htmlFor="isRemote" style={{ fontSize: '1.1rem' }}>This is a remote position</label>
-          </div>
+            <span style={{ color: 'white', fontSize: '1.1rem' }}>This is a remote position</span>
+          </label>
 
-          <textarea 
-            placeholder="Job Description and Requirements..." 
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            style={{ ...inputStyle, minHeight: '200px', resize: 'vertical' }}
-            required
-          />
-
-          <button type="submit" className="btn-primary" style={{ marginTop: '1rem', padding: '16px' }}>
-            Publish Job Listing
+          <button type="submit" className="btn-primary" disabled={loading} style={{ marginTop: '1rem' }}>
+            {loading ? 'Posting Job...' : 'Post Job'}
           </button>
         </form>
       </div>
     </main>
   );
 }
-
-const inputStyle = {
-  width: '100%',
-  padding: '16px',
-  borderRadius: '12px',
-  border: '1px solid var(--glass-border)',
-  background: 'rgba(255, 255, 255, 0.05)',
-  color: 'white',
-  fontSize: '1rem',
-  outline: 'none',
-  transition: 'border-color 0.3s ease',
-};

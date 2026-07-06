@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'create_job_screen.dart';
 
 class JobsScreen extends StatefulWidget {
   const JobsScreen({super.key});
@@ -9,47 +13,94 @@ class JobsScreen extends StatefulWidget {
 
 class _JobsScreenState extends State<JobsScreen> {
   final _searchController = TextEditingController();
+  List<dynamic> _jobs = [];
+  bool _isLoading = true;
+  String? _applyingJobId;
+  final _coverLetterController = TextEditingController();
 
-  // Mock data until API integration is complete
-  final List<Map<String, dynamic>> _mockJobs = [
-    {
-      'id': '1',
-      'title': 'Senior AI Engineer',
-      'company': 'TechCorp AI',
-      'location': 'San Francisco, CA',
-      'isRemote': true,
-      'salary': '\$180k - \$220k',
-    },
-    {
-      'id': '2',
-      'title': 'Frontend Developer',
-      'company': 'NeonGlass UI',
-      'location': 'New York, NY',
-      'isRemote': false,
-      'salary': '\$120k - \$150k',
-    },
-    {
-      'id': '3',
-      'title': 'Product Manager',
-      'company': 'Global Innovate',
-      'location': 'London, UK',
-      'isRemote': true,
-      'salary': '£90k - £120k',
-    },
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _fetchJobs();
+  }
+
+  Future<void> _fetchJobs() async {
+    try {
+      final response = await http.get(Uri.parse('http://13.60.192.118:3001/jobs'));
+      if (response.statusCode == 200) {
+        setState(() {
+          _jobs = jsonDecode(response.body);
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+      });
+      // Handle error
+    }
+  }
+
+  Future<void> _apply(String jobId) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token');
+
+      if (token == null) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('You must be logged in as a Job Seeker to apply.')),
+        );
+        return;
+      }
+
+      final response = await http.post(
+        Uri.parse('http://13.60.192.118:3001/applications/$jobId/apply'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({
+          'coverLetter': _coverLetterController.text.isNotEmpty ? _coverLetterController.text : null,
+        }),
+      );
+
+      if (!mounted) return;
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Application submitted successfully!')),
+        );
+        setState(() {
+          _applyingJobId = null;
+          _coverLetterController.clear();
+        });
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Application failed. You might have already applied or you are not a Job Seeker.')),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Connection error.')),
+      );
+    }
+  }
 
   @override
   void dispose() {
     _searchController.dispose();
+    _coverLetterController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final filteredJobs = _mockJobs.where((job) {
+    final filteredJobs = _jobs.where((job) {
       final query = _searchController.text.toLowerCase();
-      return job['title'].toString().toLowerCase().contains(query) ||
-             job['company'].toString().toLowerCase().contains(query);
+      final title = (job['title'] ?? '').toString().toLowerCase();
+      final company = (job['employer']?['companyName'] ?? '').toString().toLowerCase();
+      return title.contains(query) || company.contains(query);
     }).toList();
 
     return Scaffold(
@@ -83,7 +134,12 @@ class _JobsScreenState extends State<JobsScreen> {
                       ),
                     ),
                     ElevatedButton(
-                      onPressed: () {},
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => const CreateJobScreen()),
+                        );
+                      },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF6366F1),
                         foregroundColor: Colors.white,
@@ -127,11 +183,17 @@ class _JobsScreenState extends State<JobsScreen> {
                 
                 // Job List
                 Expanded(
-                  child: ListView.separated(
+                  child: _isLoading 
+                    ? const Center(child: CircularProgressIndicator()) 
+                    : filteredJobs.isEmpty 
+                      ? const Center(child: Text('No jobs found.', style: TextStyle(color: Colors.white)))
+                      : ListView.separated(
                     itemCount: filteredJobs.length,
                     separatorBuilder: (context, index) => const SizedBox(height: 16),
                     itemBuilder: (context, index) {
                       final job = filteredJobs[index];
+                      final isApplying = _applyingJobId == job['id'];
+                      
                       return Container(
                         padding: const EdgeInsets.all(20),
                         decoration: BoxDecoration(
@@ -150,7 +212,7 @@ class _JobsScreenState extends State<JobsScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              job['title'],
+                              job['title'] ?? 'Untitled',
                               style: const TextStyle(
                                 fontSize: 20,
                                 fontWeight: FontWeight.bold,
@@ -162,26 +224,60 @@ class _JobsScreenState extends State<JobsScreen> {
                               spacing: 12,
                               runSpacing: 8,
                               children: [
-                                _buildBadge(Icons.business, job['company']),
-                                _buildBadge(Icons.location_on, '${job['location']} ${job['isRemote'] ? '(Remote)' : ''}'),
-                                _buildBadge(Icons.attach_money, job['salary']),
+                                _buildBadge(Icons.business, job['employer']?['companyName'] ?? 'Unknown'),
+                                _buildBadge(Icons.location_on, '${job['location'] ?? 'Anywhere'} ${(job['isRemote'] ?? false) ? '(Remote)' : ''}'),
+                                _buildBadge(Icons.attach_money, job['salary'] ?? 'Competitive'),
                               ],
                             ),
                             const SizedBox(height: 16),
                             Align(
                               alignment: Alignment.centerRight,
                               child: ElevatedButton(
-                                onPressed: () {},
+                                onPressed: () {
+                                  setState(() {
+                                    _applyingJobId = isApplying ? null : job['id'];
+                                  });
+                                },
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFF6366F1),
+                                  backgroundColor: isApplying ? Colors.grey[700] : const Color(0xFF6366F1),
                                   foregroundColor: Colors.white,
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(12),
                                   ),
                                 ),
-                                child: const Text('Apply Now'),
+                                child: Text(isApplying ? 'Cancel' : 'Apply Now'),
                               ),
                             ),
+                            if (isApplying) ...[
+                              const SizedBox(height: 16),
+                              TextField(
+                                controller: _coverLetterController,
+                                style: const TextStyle(color: Colors.white),
+                                maxLines: 3,
+                                decoration: InputDecoration(
+                                  hintText: 'Write a brief cover letter (optional)...',
+                                  hintStyle: TextStyle(color: Colors.white.withOpacity(0.5)),
+                                  filled: true,
+                                  fillColor: Colors.white.withOpacity(0.05),
+                                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              Align(
+                                alignment: Alignment.centerRight,
+                                child: ElevatedButton(
+                                  onPressed: () => _apply(job['id']),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: const Color(0xFF00F0FF),
+                                    foregroundColor: Colors.black,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                  ),
+                                  child: const Text('Confirm Application', style: TextStyle(fontWeight: FontWeight.bold)),
+                                ),
+                              ),
+                            ],
                           ],
                         ),
                       );

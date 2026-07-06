@@ -1,16 +1,72 @@
-"use client";
-import { useState } from 'react';
+'use client';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
-
-// Mock data until API integration is complete
-const MOCK_JOBS = [
-  { id: '1', title: 'Senior AI Engineer', company: 'TechCorp AI', location: 'San Francisco, CA', isRemote: true, salary: '$180k - $220k' },
-  { id: '2', title: 'Frontend Developer', company: 'NeonGlass UI', location: 'New York, NY', isRemote: false, salary: '$120k - $150k' },
-  { id: '3', title: 'Product Manager', company: 'Global Innovate', location: 'London, UK', isRemote: true, salary: '£90k - £120k' },
-];
 
 export default function JobsFeedPage() {
   const [searchQuery, setSearchQuery] = useState('');
+  const [jobs, setJobs] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [applyingJobId, setApplyingJobId] = useState<string | null>(null);
+  const [coverLetter, setCoverLetter] = useState('');
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+
+  useEffect(() => {
+    fetchJobs();
+  }, []);
+
+  const fetchJobs = async () => {
+    try {
+      const res = await fetch('http://13.60.192.118:3001/jobs');
+      if (res.ok) {
+        const data = await res.json();
+        setJobs(data);
+      }
+    } catch (err) {
+      console.error('Failed to fetch jobs:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleApply = async (jobId: string) => {
+    setError('');
+    setSuccess('');
+    
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('You must be logged in to apply for a job.');
+      }
+
+      const res = await fetch(`http://13.60.192.118:3001/applications/${jobId}/apply`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          coverLetter: coverLetter || undefined
+        }),
+      });
+
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.message || 'Application failed');
+      }
+
+      setSuccess('Application submitted successfully!');
+      setApplyingJobId(null);
+      setCoverLetter('');
+    } catch (err: any) {
+      setError(err.message);
+    }
+  };
+
+  const filteredJobs = jobs.filter(j => 
+    j.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    (j.employer?.companyName || '').toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   return (
     <main style={{ padding: '4rem', maxWidth: '1000px', margin: '0 auto' }}>
@@ -41,21 +97,72 @@ export default function JobsFeedPage() {
         />
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-        {MOCK_JOBS.filter(j => j.title.toLowerCase().includes(searchQuery.toLowerCase())).map(job => (
-          <div key={job.id} className="glass-panel" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.5rem 2rem' }}>
-            <div>
-              <h2 style={{ fontSize: '1.5rem', margin: '0 0 0.5rem 0' }}>{job.title}</h2>
-              <div style={{ display: 'flex', gap: '1rem', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
-                <span>🏢 {job.company}</span>
-                <span>📍 {job.location} {job.isRemote && '(Remote)'}</span>
-                <span>💰 {job.salary}</span>
+      {error && (
+        <div style={{ backgroundColor: 'rgba(255, 0, 0, 0.1)', border: '1px solid red', color: '#ff4d4d', padding: '1rem', borderRadius: '8px', marginBottom: '1.5rem', textAlign: 'center' }}>
+          {error}
+        </div>
+      )}
+
+      {success && (
+        <div style={{ backgroundColor: 'rgba(0, 255, 0, 0.1)', border: '1px solid green', color: '#00ff00', padding: '1rem', borderRadius: '8px', marginBottom: '1.5rem', textAlign: 'center' }}>
+          {success}
+        </div>
+      )}
+
+      {loading ? (
+        <p style={{ textAlign: 'center', color: 'var(--text-secondary)' }}>Loading jobs...</p>
+      ) : filteredJobs.length === 0 ? (
+        <p style={{ textAlign: 'center', color: 'var(--text-secondary)' }}>No jobs found.</p>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+          {filteredJobs.map(job => (
+            <div key={job.id} className="glass-panel" style={{ padding: '1.5rem 2rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <h2 style={{ fontSize: '1.5rem', margin: '0 0 0.5rem 0' }}>{job.title}</h2>
+                  <div style={{ display: 'flex', gap: '1rem', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
+                    <span>🏢 {job.employer?.companyName || 'Unknown Company'}</span>
+                    <span>📍 {job.location || 'Anywhere'} {job.isRemote && '(Remote)'}</span>
+                    <span>💰 {job.salary || 'Competitive'}</span>
+                  </div>
+                </div>
+                <button 
+                  className="btn-primary" 
+                  style={{ padding: '8px 24px' }}
+                  onClick={() => setApplyingJobId(applyingJobId === job.id ? null : job.id)}
+                >
+                  {applyingJobId === job.id ? 'Cancel' : 'Apply Now'}
+                </button>
               </div>
+
+              {/* Optional Cover Letter Section */}
+              {applyingJobId === job.id && (
+                <div style={{ marginTop: '1.5rem', padding: '1.5rem', background: 'rgba(0,0,0,0.2)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                  <h3 style={{ margin: '0 0 1rem 0', fontSize: '1.1rem' }}>Submit Application</h3>
+                  <p style={{ margin: '0 0 1rem 0', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
+                    Would you like to include an optional cover letter? (Pro tip: AI Cover Letter generation is coming soon for premium subscribers!)
+                  </p>
+                  <textarea 
+                    value={coverLetter}
+                    onChange={(e) => setCoverLetter(e.target.value)}
+                    rows={4}
+                    placeholder="Write a brief cover letter (optional)..."
+                    style={{ width: '100%', padding: '1rem', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.1)', backgroundColor: 'rgba(255, 255, 255, 0.05)', color: 'white', fontSize: '1rem', outline: 'none', resize: 'vertical', marginBottom: '1rem' }}
+                  />
+                  <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                    <button 
+                      className="btn-primary" 
+                      onClick={() => handleApply(job.id)}
+                    >
+                      Confirm Application
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
-            <button className="btn-primary" style={{ padding: '8px 24px' }}>Apply</button>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </main>
   );
 }

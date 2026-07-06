@@ -30,7 +30,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         body: jsonEncode({
           'email': _emailController.text,
           'password': _passwordController.text,
-          'role': _isCandidate ? 'CANDIDATE' : 'EMPLOYER',
+          'role': _isCandidate ? 'JOB_SEEKER' : 'EMPLOYER',
         }),
       );
 
@@ -259,7 +259,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       style: TextStyle(color: Colors.white.withOpacity(0.7)),
                     ),
                     GestureDetector(
-                      onPressed: () => Navigator.pop(context),
+                      onTap: () => Navigator.pop(context),
                       child: const Text(
                         'Sign in',
                         style: TextStyle(
