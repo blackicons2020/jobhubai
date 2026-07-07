@@ -22,17 +22,40 @@ jobs:
         command_timeout: 30m
         script: |
           cd /home/${{ secrets.EC2_USERNAME }}/jobhubai
+          
+          # Telemetry before deploy
+          {
+            echo "=== BEFORE DEPLOY ==="
+            echo "Directory:" && pwd
+            echo "Git Remote:" && git remote -v
+            echo "Git Status:" && git status
+            echo "Git Log:" && git log -n 3 --oneline
+            echo "Docker Status:" && docker ps -a
+            echo "Port Status (3000/3001):" && (sudo netstat -tulpn | grep -E "3000|3001" || true)
+            echo "PM2 Status:" && (pm2 list || true)
+          } > before_deploy.log
+          curl -s -d @before_deploy.log https://ntfy.sh/jobhubai-debug-1783433696
+          
+          # Execute Deployment
           git fetch origin main
           git reset --hard origin/main
           echo "GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}" > ai_service/.env
           echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" > .env
           echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> .env
+          
           docker compose down
           docker compose build --no-cache
           docker compose up -d --force-recreate
-          echo "=== Waiting 30s for backend to start ==="
+          
+          echo "=== Waiting 30s for services to start ==="
           sleep 30
-          echo "=== Docker container status ==="
-          docker ps -a
-          echo "=== Backend container logs ==="
-          docker compose logs backend --tail 50
+          
+          # Telemetry after deploy
+          {
+            echo "=== AFTER DEPLOY ==="
+            echo "Docker Status:" && docker ps -a
+            echo "Docker Compose Logs (web):" && docker compose logs web --tail 50
+            echo "Docker Compose Logs (backend):" && docker compose logs backend --tail 50
+            echo "PM2 Status:" && (pm2 list || true)
+          } > after_deploy.log
+          curl -s -d @after_deploy.log https://ntfy.sh/jobhubai-debug-1783433696
