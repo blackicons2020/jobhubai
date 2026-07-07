@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 
 export default function Home() {
   return (
@@ -13,9 +14,12 @@ export default function Home() {
       </nav>
 
       <header style={{ textAlign: 'center', marginBottom: '4rem' }}>
-        <h1 style={{ fontSize: '4rem', fontWeight: 800, margin: '0 0 1rem 0' }}>
-          Welcome to <span className="text-gradient">Job Hub AI</span>
-        </h1>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1rem', marginBottom: '1rem' }}>
+          <Image src="/logo.png" alt="JobHub AI Logo" width={80} height={80} priority />
+          <h1 style={{ fontSize: '4rem', fontWeight: 800, margin: 0 }}>
+            Welcome to <span className="text-gradient">JobHub AI</span>
+          </h1>
+        </div>
         <p style={{ color: 'var(--text-secondary)', fontSize: '1.2rem', maxWidth: '600px', margin: '0 auto' }}>
           The global AI employment operating system that helps job seekers build careers and helps employers hire talent efficiently through automation and intelligence.
         </p>
