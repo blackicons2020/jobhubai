@@ -27,6 +27,7 @@ jobs:
           {
             echo "=== BEFORE DEPLOY ==="
             echo "Directory:" && pwd
+            echo "Public IP:" && curl -s http://checkip.amazonaws.com
             echo "Git Remote:" && git remote -v
             echo "Git Status:" && git status
             echo "Git Log:" && git log -n 3 --oneline
