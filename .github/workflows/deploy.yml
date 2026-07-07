@@ -22,7 +22,8 @@ jobs:
         command_timeout: 30m
         script: |
           cd /home/${{ secrets.EC2_USERNAME }}/jobhubai
-          git pull origin main
+          git fetch origin main
+          git reset --hard origin/main
           echo "GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}" > ai_service/.env
           echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" > .env
           echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> .env
