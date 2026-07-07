@@ -26,3 +26,11 @@ jobs:
           echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" > .env
           echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> .env
           docker compose up -d --build
+          echo "=== Waiting 30s for containers to start ==="
+          sleep 30
+          echo "=== Docker container status ==="
+          docker ps -a
+          echo "=== Backend container logs ==="
+          docker compose logs backend --tail 100
+          echo "=== DB container logs ==="
+          docker compose logs db --tail 50
