@@ -56,6 +56,7 @@ jobs:
             echo "=== AFTER DEPLOY ==="
             echo "Docker Status:" && docker ps -a
             echo "Docker Compose Logs (web):" && docker compose logs web --tail 50
+            echo "Local Curl Test (port 3000):" && (curl -s http://localhost:3000/login | grep -o -E "<title>.*</title>|Welcome.*Back" || true)
             echo "Docker Compose Logs (backend):" && docker compose logs backend --tail 50
             echo "PM2 Status:" && (pm2 list || true)
           } > after_deploy.log
