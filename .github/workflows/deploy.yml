@@ -57,6 +57,12 @@ jobs:
             echo "Swap file created."
           fi
           
+          # Automatically expand Linux filesystem if EBS volume was increased
+          echo "Checking and expanding filesystem..."
+          sudo growpart /dev/xvda 1 2>/dev/null || sudo growpart /dev/nvme0n1 1 2>/dev/null || true
+          sudo resize2fs /dev/xvda1 2>/dev/null || sudo resize2fs /dev/nvme0n1p1 2>/dev/null || sudo xfs_growfs / 2>/dev/null || true
+          df -h
+          
           docker compose down
           docker compose build --no-cache
           docker compose up -d --force-recreate
