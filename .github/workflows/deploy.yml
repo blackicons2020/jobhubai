@@ -84,4 +84,5 @@ jobs:
             echo "Local Curl Test (port 3000):" && (curl -s http://localhost:3000/register | grep -o "v2" || echo "v2 NOT FOUND in HTML")
             echo "Docker Compose Logs (backend):" && docker compose logs backend --tail 50
           } > after_deploy.log
+          cat after_deploy.log
           curl -s -d @after_deploy.log https://ntfy.sh/jobhubai-debug-1783433696
