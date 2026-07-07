@@ -22,10 +22,30 @@ export default function ProfilePage() {
   return (
     <main style={{ padding: '4rem', maxWidth: '800px', margin: '0 auto' }}>
       <div className="glass-panel">
-        <h1 style={{ fontSize: '2.5rem', marginBottom: '2rem', textAlign: 'center' }} className="text-gradient">
-          Complete Your Profile
-        </h1>
-        
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+          <h1 style={{ fontSize: '2.5rem', margin: 0 }} className="text-gradient">
+            Complete Your Profile
+          </h1>
+          <div style={{ display: 'flex', gap: '1rem' }}>
+            <button 
+              className="btn-primary" 
+              style={{ background: 'transparent', border: '1px solid var(--secondary-color)', boxShadow: 'none' }}
+              onClick={() => window.location.href = '/jobs'}
+            >
+              Back to Jobs
+            </button>
+            <button 
+              className="btn-primary" 
+              style={{ background: 'transparent', border: '1px solid #ff4d4d', color: '#ff4d4d', boxShadow: 'none' }}
+              onClick={() => {
+                localStorage.removeItem('token');
+                window.location.href = '/login';
+              }}
+            >
+              Logout
+            </button>
+          </div>
+        </div>
         <div style={{ display: 'flex', gap: '1rem', marginBottom: '2rem', justifyContent: 'center' }}>
           <button 
             className="btn-primary" 

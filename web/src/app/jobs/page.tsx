@@ -72,9 +72,24 @@ export default function JobsFeedPage() {
     <main style={{ padding: '4rem', maxWidth: '1000px', margin: '0 auto' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '3rem' }}>
         <h1 style={{ fontSize: '3rem', margin: 0 }} className="text-gradient">Job Board</h1>
-        <Link href="/jobs/create">
-          <button className="btn-primary">Post a Job</button>
-        </Link>
+        <div style={{ display: 'flex', gap: '1rem' }}>
+          <Link href="/profile">
+            <button className="btn-primary" style={{ background: 'transparent', border: '1px solid var(--secondary-color)', boxShadow: 'none' }}>Profile</button>
+          </Link>
+          <Link href="/jobs/create">
+            <button className="btn-primary">Post a Job</button>
+          </Link>
+          <button 
+            className="btn-primary" 
+            style={{ background: 'transparent', border: '1px solid #ff4d4d', color: '#ff4d4d', boxShadow: 'none' }}
+            onClick={() => {
+              localStorage.removeItem('token');
+              window.location.href = '/login';
+            }}
+          >
+            Logout
+          </button>
+        </div>
       </div>
 
       <div style={{ marginBottom: '3rem' }}>
