@@ -11,7 +11,7 @@ jobs:
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     - name: Deploy to EC2
       uses: appleboy/ssh-action@v0.1.10
@@ -19,6 +19,7 @@ jobs:
         host: ${{ secrets.EC2_HOST }}
         username: ${{ secrets.EC2_USERNAME }}
         key: ${{ secrets.EC2_PRIVATE_KEY }}
+        command_timeout: 30m
         script: |
           cd /home/${{ secrets.EC2_USERNAME }}/jobhubai
           git pull origin main
@@ -26,11 +27,9 @@ jobs:
           echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" > .env
           echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> .env
           docker compose up -d --build
-          echo "=== Waiting 30s for containers to start ==="
+          echo "=== Waiting 30s for backend to start ==="
           sleep 30
           echo "=== Docker container status ==="
           docker ps -a
           echo "=== Backend container logs ==="
-          docker compose logs backend --tail 100
-          echo "=== DB container logs ==="
-          docker compose logs db --tail 50
+          docker compose logs backend --tail 50
