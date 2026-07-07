@@ -51,7 +51,7 @@ class _LoginScreenState extends State<LoginScreen> {
       }
     } catch (e) {
       setState(() {
-        _errorMessage = 'Connection error. Please try again.';
+        _errorMessage = 'Connection error: $e';
       });
     } finally {
       if (mounted) {
