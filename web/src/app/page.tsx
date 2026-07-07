@@ -15,7 +15,7 @@ export default function Home() {
 
       <header style={{ textAlign: 'center', marginBottom: '4rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1rem', marginBottom: '1rem' }}>
-          <Image src="/logo.png" alt="JobHub AI Logo" width={80} height={80} priority />
+          <Image src="/logo.svg" alt="JobHub AI Logo" width={80} height={80} priority />
           <h1 style={{ fontSize: '4rem', fontWeight: 800, margin: 0 }}>
             Welcome to <span className="text-gradient">JobHub AI</span>
           </h1>
