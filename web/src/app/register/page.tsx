@@ -54,7 +54,7 @@ export default function RegisterPage() {
           Join <span className="text-gradient">JobHub AI</span>
         </h1>
         <p style={{ color: 'var(--text-secondary)', textAlign: 'center', marginBottom: '2rem' }}>
-          Create an account to start your journey
+          Create an account to start your journey (v2)
         </p>
 
         {error && (
