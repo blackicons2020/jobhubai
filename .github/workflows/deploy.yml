@@ -58,7 +58,8 @@ jobs:
           fi
           
           docker compose down
-          docker system prune -af --volumes 2>/dev/null || true
+          docker image prune -af 2>/dev/null || true
+          docker builder prune -af 2>/dev/null || true
           docker compose build --no-cache
           docker compose up -d --force-recreate
           
