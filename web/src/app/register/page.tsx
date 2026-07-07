@@ -25,8 +25,21 @@ export default function RegisterPage() {
         throw new Error('Registration failed. Please try again.');
       }
 
-      // Automatically redirect to login after successful registration
-      window.location.href = '/login';
+      // Automatically login
+      const loginRes = await fetch('http://13.60.192.118:3001/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+
+      if (loginRes.ok) {
+        const data = await loginRes.json();
+        localStorage.setItem('token', data.access_token);
+        // New users have incomplete profiles
+        window.location.href = '/profile';
+      } else {
+        window.location.href = '/login';
+      }
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -38,7 +51,7 @@ export default function RegisterPage() {
     <main style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem' }}>
       <div className="glass-panel" style={{ width: '100%', maxWidth: '400px', padding: '3rem 2rem' }}>
         <h1 style={{ fontSize: '2.5rem', fontWeight: 800, textAlign: 'center', marginBottom: '0.5rem' }}>
-          Join <span className="text-gradient">Job Hub AI</span>
+          Join <span className="text-gradient">JobHub AI</span>
         </h1>
         <p style={{ color: 'var(--text-secondary)', textAlign: 'center', marginBottom: '2rem' }}>
           Create an account to start your journey

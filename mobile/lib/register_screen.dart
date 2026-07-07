@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'login_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'profile_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -35,11 +37,30 @@ class _RegisterScreenState extends State<RegisterScreen> {
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Registration successful! Please sign in.')),
+        // Auto-login after registration
+        final loginResponse = await http.post(
+          Uri.parse('http://13.60.192.118:3001/auth/login'),
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({
+            'email': _emailController.text,
+            'password': _passwordController.text,
+          }),
         );
-        Navigator.pop(context); // Go back to login screen
+        
+        if (loginResponse.statusCode == 200 || loginResponse.statusCode == 201) {
+          final loginData = json.decode(loginResponse.body);
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString('token', loginData['access_token']);
+          
+          if (!mounted) return;
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const ProfileScreen()),
+          );
+        } else {
+          if (!mounted) return;
+          Navigator.pop(context); // Fallback to login screen
+        }
       } else {
         setState(() {
           _errorMessage = 'Registration failed. Try a different email.';
@@ -86,7 +107,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               children: [
                 const SizedBox(height: 20),
                 Text(
-                  'Join Job Hub AI',
+                  'Join JobHub AI',
                   style: TextStyle(
                     fontSize: 40,
                     fontWeight: FontWeight.w800,

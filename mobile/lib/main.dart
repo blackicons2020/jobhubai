@@ -13,7 +13,7 @@ class JobHubAIApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Job Hub AI',
+      title: 'JobHub AI',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         brightness: Brightness.dark,
@@ -55,7 +55,7 @@ class WelcomeScreen extends StatelessWidget {
               children: [
                 const Spacer(),
                 Text(
-                  'Welcome to\nJob Hub AI',
+                  'Welcome to\nJobHub AI',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 48,

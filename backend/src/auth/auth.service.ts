@@ -3,12 +3,14 @@ import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
 import { Prisma } from '@prisma/client';
+import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class AuthService {
   constructor(
     private usersService: UsersService,
-    private jwtService: JwtService
+    private jwtService: JwtService,
+    private prisma: PrismaService,
   ) {}
 
   async register(data: Prisma.UserCreateInput) {
@@ -26,7 +28,8 @@ export class AuthService {
     const payload = { email: user.email, sub: user.id, role: user.role };
     return {
       access_token: this.jwtService.sign(payload),
-      user: { id: user.id, email: user.email, role: user.role }
+      user: { id: user.id, email: user.email, role: user.role },
+      profileComplete: false, // New users don't have a profile yet
     };
   }
 
@@ -41,10 +44,20 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
+    let profileComplete = false;
+    if (user.role === 'JOB_SEEKER') {
+      const profile = await this.prisma.jobSeekerProfile.findUnique({ where: { userId: user.id } });
+      profileComplete = !!profile && profile.firstName.length > 0;
+    } else if (user.role === 'EMPLOYER') {
+      const profile = await this.prisma.employer.findUnique({ where: { userId: user.id } });
+      profileComplete = !!profile && profile.companyName.length > 0;
+    }
+
     const payload = { email: user.email, sub: user.id, role: user.role };
     return {
       access_token: this.jwtService.sign(payload),
-      user: { id: user.id, email: user.email, role: user.role }
+      user: { id: user.id, email: user.email, role: user.role },
+      profileComplete,
     };
   }
 }

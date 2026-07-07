@@ -26,29 +26,33 @@ enum Role {
 }
 
 model JobSeekerProfile {
-  id        String   @id @default(uuid())
-  userId    String   @unique
-  user      User     @relation(fields: [userId], references: [id])
-  firstName String
-  lastName  String
-  bio       String?
-  resumeUrl String?
-  skills    String[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id               String   @id @default(uuid())
+  userId           String   @unique
+  user             User     @relation(fields: [userId], references: [id])
+  firstName        String
+  lastName         String
+  bio              String?
+  resumeUrl        String?
+  profilePicture   String?
+  skills           String[]
+  autoApplyEnabled Boolean  @default(false)
+  autoApplyKeywords String[]
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
   applications Application[]
 }
 
 model Employer {
-  id          String   @id @default(uuid())
-  userId      String   @unique
-  user        User     @relation(fields: [userId], references: [id])
-  companyName String
-  description String?
-  website     String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id             String   @id @default(uuid())
+  userId         String   @unique
+  user           User     @relation(fields: [userId], references: [id])
+  companyName    String
+  description    String?
+  website        String?
+  profilePicture String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   jobs Job[]
 }

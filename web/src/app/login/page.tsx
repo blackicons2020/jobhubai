@@ -26,7 +26,12 @@ export default function LoginPage() {
 
       const data = await res.json();
       localStorage.setItem('token', data.access_token);
-      window.location.href = '/jobs';
+      
+      if (data.profileComplete === false) {
+        window.location.href = '/profile';
+      } else {
+        window.location.href = '/jobs';
+      }
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -38,7 +43,7 @@ export default function LoginPage() {
     <main style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem' }}>
       <div className="glass-panel" style={{ width: '100%', maxWidth: '400px', padding: '3rem 2rem' }}>
         <h1 style={{ fontSize: '2.5rem', fontWeight: 800, textAlign: 'center', marginBottom: '0.5rem' }}>
-          Welcome <span className="text-gradient">Back</span>
+          Welcome back to <span className="text-gradient">JobHub AI</span>
         </h1>
         <p style={{ color: 'var(--text-secondary)', textAlign: 'center', marginBottom: '2rem' }}>
           Sign in to access your AI employment portal
