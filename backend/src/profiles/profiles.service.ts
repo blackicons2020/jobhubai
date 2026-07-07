@@ -23,6 +23,21 @@ export class ProfilesService {
     });
   }
 
+  async updateJobSeekerProfile(userId: string, data: Prisma.JobSeekerProfileUpdateInput) {
+    const existingProfile = await this.prisma.jobSeekerProfile.findUnique({
+      where: { userId },
+    });
+
+    if (!existingProfile) {
+      throw new NotFoundException('Job seeker profile not found.');
+    }
+
+    return this.prisma.jobSeekerProfile.update({
+      where: { userId },
+      data,
+    });
+  }
+
   async getJobSeekerProfile(userId: string) {
     const profile = await this.prisma.jobSeekerProfile.findUnique({
       where: { userId },

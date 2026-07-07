@@ -10,6 +10,7 @@ export default function JobsFeedPage() {
   const [coverLetter, setCoverLetter] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [generatingCoverLetter, setGeneratingCoverLetter] = useState(false);
 
   useEffect(() => {
     fetchJobs();
@@ -60,6 +61,34 @@ export default function JobsFeedPage() {
       setCoverLetter('');
     } catch (err: any) {
       setError(err.message);
+    }
+  };
+
+  const handleGenerateCoverLetter = async (job: any) => {
+    setGeneratingCoverLetter(true);
+    try {
+      const token = localStorage.getItem('token');
+      // Fetch user profile first (we need it for the AI)
+      const profileRes = await fetch('http://13.60.192.118:3001/profiles/job-seeker', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const profileData = await profileRes.json();
+
+      const res = await fetch('http://13.60.192.118:3001/ai/cover-letter/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          profile: profileData,
+          job: job
+        })
+      });
+      const data = await res.json();
+      setCoverLetter(data.cover_letter);
+    } catch (err) {
+      console.error(err);
+      setError('Failed to generate cover letter.');
+    } finally {
+      setGeneratingCoverLetter(false);
     }
   };
 
@@ -164,7 +193,15 @@ export default function JobsFeedPage() {
                     placeholder="Write a brief cover letter (optional)..."
                     style={{ width: '100%', padding: '1rem', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.1)', backgroundColor: 'rgba(255, 255, 255, 0.05)', color: 'white', fontSize: '1rem', outline: 'none', resize: 'vertical', marginBottom: '1rem' }}
                   />
-                  <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <button 
+                      className="btn-primary" 
+                      onClick={() => handleGenerateCoverLetter(job)}
+                      disabled={generatingCoverLetter}
+                      style={{ background: 'linear-gradient(135deg, #00f0ff 0%, #0080ff 100%)', padding: '8px 16px', fontSize: '0.9rem' }}
+                    >
+                      {generatingCoverLetter ? 'Generating...' : '✨ Generate AI Cover Letter'}
+                    </button>
                     <button 
                       className="btn-primary" 
                       onClick={() => handleApply(job.id)}

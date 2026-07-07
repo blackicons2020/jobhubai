@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Body, UseGuards, Request, ForbiddenException } from '@nestjs/common';
+import { Controller, Post, Get, Put, Body, UseGuards, Request, ForbiddenException } from '@nestjs/common';
 import { ProfilesService } from './profiles.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { Prisma } from '@prisma/client';
@@ -22,6 +22,14 @@ export class ProfilesController {
       throw new ForbiddenException('Only JOB_SEEKERs can view this profile type.');
     }
     return this.profilesService.getJobSeekerProfile(req.user.userId);
+  }
+
+  @Put('job-seeker')
+  async updateJobSeekerProfile(@Request() req, @Body() data: Prisma.JobSeekerProfileUpdateInput) {
+    if (req.user.role !== 'JOB_SEEKER') {
+      throw new ForbiddenException('Only JOB_SEEKERs can update this profile type.');
+    }
+    return this.profilesService.updateJobSeekerProfile(req.user.userId, data);
   }
 
   @Post('employer')

@@ -19,6 +19,7 @@ class _JobsScreenState extends State<JobsScreen> {
   bool _isLoading = true;
   String? _applyingJobId;
   final _coverLetterController = TextEditingController();
+  bool _isGeneratingCoverLetter = false;
 
   @override
   void initState() {
@@ -86,6 +87,55 @@ class _JobsScreenState extends State<JobsScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Connection error.')),
       );
+    }
+  }
+
+  Future<void> _generateCoverLetter(dynamic job) async {
+    setState(() {
+      _isGeneratingCoverLetter = true;
+    });
+    
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token');
+
+      // 1. Fetch user profile
+      final profileResponse = await http.get(
+        Uri.parse('http://13.60.192.118:3001/profiles/job-seeker'),
+        headers: {'Authorization': 'Bearer $token'},
+      );
+      
+      if (profileResponse.statusCode == 200) {
+        final profileData = jsonDecode(profileResponse.body);
+        
+        // 2. Generate cover letter
+        final generateResponse = await http.post(
+          Uri.parse('http://13.60.192.118:3001/ai/cover-letter/generate'),
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({
+            'profile': profileData,
+            'job': job,
+          }),
+        );
+        
+        if (generateResponse.statusCode == 200 || generateResponse.statusCode == 201) {
+          final data = jsonDecode(generateResponse.body);
+          setState(() {
+            _coverLetterController.text = data['cover_letter'];
+          });
+        }
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Failed to generate cover letter.')),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isGeneratingCoverLetter = false;
+        });
+      }
     }
   }
 
@@ -292,19 +342,33 @@ class _JobsScreenState extends State<JobsScreen> {
                                 ),
                               ),
                               const SizedBox(height: 12),
-                              Align(
-                                alignment: Alignment.centerRight,
-                                child: ElevatedButton(
-                                  onPressed: () => _apply(job['id']),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: const Color(0xFF00F0FF),
-                                    foregroundColor: Colors.black,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(12),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  ElevatedButton.icon(
+                                    onPressed: _isGeneratingCoverLetter ? null : () => _generateCoverLetter(job),
+                                    icon: const Icon(Icons.auto_awesome, size: 18),
+                                    label: Text(_isGeneratingCoverLetter ? 'Generating...' : 'AI Cover Letter'),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.indigoAccent,
+                                      foregroundColor: Colors.white,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
                                     ),
                                   ),
-                                  child: const Text('Confirm Application', style: TextStyle(fontWeight: FontWeight.bold)),
-                                ),
+                                  ElevatedButton(
+                                    onPressed: () => _apply(job['id']),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: const Color(0xFF00F0FF),
+                                      foregroundColor: Colors.black,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                    ),
+                                    child: const Text('Confirm Application', style: TextStyle(fontWeight: FontWeight.bold)),
+                                  ),
+                                ],
                               ),
                             ],
                           ],
