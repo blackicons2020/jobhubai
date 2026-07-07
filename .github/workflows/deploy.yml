@@ -27,7 +27,9 @@ jobs:
           echo "GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}" > ai_service/.env
           echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" > .env
           echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> .env
-          docker compose up -d --build
+          docker compose down
+          docker compose build --no-cache
+          docker compose up -d --force-recreate
           echo "=== Waiting 30s for backend to start ==="
           sleep 30
           echo "=== Docker container status ==="
