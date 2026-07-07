@@ -3,6 +3,8 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'create_job_screen.dart';
+import 'login_screen.dart';
+import 'profile_screen.dart';
 
 class JobsScreen extends StatefulWidget {
   const JobsScreen({super.key});
@@ -133,22 +135,49 @@ class _JobsScreenState extends State<JobsScreen> {
                           ).createShader(const Rect.fromLTWH(0.0, 0.0, 200.0, 50.0)),
                       ),
                     ),
-                    ElevatedButton(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => const CreateJobScreen()),
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF6366F1),
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                    Row(
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.person, color: Colors.white70),
+                          tooltip: 'Profile',
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (context) => const ProfileScreen()),
+                            );
+                          },
                         ),
-                        elevation: 4,
-                      ),
-                      child: const Text('Post a Job', style: TextStyle(fontWeight: FontWeight.bold)),
+                        ElevatedButton(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (context) => const CreateJobScreen()),
+                            );
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF6366F1),
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            elevation: 4,
+                          ),
+                          child: const Text('Post Job', style: TextStyle(fontWeight: FontWeight.bold)),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.logout, color: Colors.redAccent),
+                          tooltip: 'Logout',
+                          onPressed: () async {
+                            final prefs = await SharedPreferences.getInstance();
+                            await prefs.remove('token');
+                            if (!context.mounted) return;
+                            Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(builder: (context) => const LoginScreen()),
+                            );
+                          },
+                        ),
+                      ],
                     ),
                   ],
                 ),
