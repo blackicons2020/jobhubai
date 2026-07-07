@@ -27,6 +27,8 @@ jobs:
           {
             echo "=== BEFORE DEPLOY ==="
             echo "Directory:" && pwd
+            echo "Home Directory List:" && ls -la /home/ubuntu/
+            echo "Systemd Services:" && (systemctl list-units --type=service | grep -i -E "job|docker|node|pm2" || true)
             echo "Public IP:" && curl -s http://checkip.amazonaws.com
             echo "Git Remote:" && git remote -v
             echo "Git Status:" && git status
