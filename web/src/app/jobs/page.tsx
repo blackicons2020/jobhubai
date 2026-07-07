@@ -13,7 +13,49 @@ export default function JobsFeedPage() {
   const [generatingCoverLetter, setGeneratingCoverLetter] = useState(false);
 
   useEffect(() => {
-    fetchJobs();
+    // Guard: check if user has a completed profile before allowing access to jobs
+    const checkProfileAndFetch = async () => {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        window.location.href = '/login';
+        return;
+      }
+
+      // Try job-seeker profile first, then employer
+      let hasProfile = false;
+      try {
+        const seekerRes = await fetch('http://13.60.192.118:3001/profiles/job-seeker', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (seekerRes.ok) {
+          const profile = await seekerRes.json();
+          if (profile && profile.firstName && profile.firstName.length > 0) {
+            hasProfile = true;
+          }
+        }
+        if (!hasProfile) {
+          const employerRes = await fetch('http://13.60.192.118:3001/profiles/employer', {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          if (employerRes.ok) {
+            const profile = await employerRes.json();
+            if (profile && profile.companyName && profile.companyName.length > 0) {
+              hasProfile = true;
+            }
+          }
+        }
+      } catch (err) {
+        // Profile check failed, redirect to profile to be safe
+      }
+
+      if (!hasProfile) {
+        window.location.href = '/profile';
+        return;
+      }
+
+      fetchJobs();
+    };
+    checkProfileAndFetch();
   }, []);
 
   const fetchJobs = async () => {

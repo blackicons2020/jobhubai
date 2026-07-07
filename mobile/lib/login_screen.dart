@@ -41,15 +41,37 @@ class _LoginScreenState extends State<LoginScreen> {
         await prefs.setString('token', data['access_token']);
 
         if (mounted) {
-          if (data['profileComplete'] == false) {
+          // Actively check if user has a completed profile
+          final role = data['user']?['role'] ?? 'JOB_SEEKER';
+          final profileEndpoint = role == 'EMPLOYER' ? '/profiles/employer' : '/profiles/job-seeker';
+          bool hasProfile = false;
+          
+          try {
+            final profileRes = await http.get(
+              Uri.parse('http://13.60.192.118:3001$profileEndpoint'),
+              headers: {'Authorization': 'Bearer ${data['access_token']}'},
+            );
+            if (profileRes.statusCode == 200) {
+              final profile = jsonDecode(profileRes.body);
+              if (role == 'EMPLOYER') {
+                hasProfile = profile != null && profile['companyName'] != null && profile['companyName'].toString().isNotEmpty;
+              } else {
+                hasProfile = profile != null && profile['firstName'] != null && profile['firstName'].toString().isNotEmpty;
+              }
+            }
+          } catch (_) {
+            // Profile check failed, send to profile to be safe
+          }
+          
+          if (hasProfile) {
             Navigator.pushReplacement(
               context,
-              MaterialPageRoute(builder: (context) => const ProfileScreen()),
+              MaterialPageRoute(builder: (context) => const JobsScreen()),
             );
           } else {
             Navigator.pushReplacement(
               context,
-              MaterialPageRoute(builder: (context) => const JobsScreen()),
+              MaterialPageRoute(builder: (context) => const ProfileScreen()),
             );
           }
         }

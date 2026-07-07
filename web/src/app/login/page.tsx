@@ -27,11 +27,28 @@ export default function LoginPage() {
       const data = await res.json();
       localStorage.setItem('token', data.access_token);
       
-      if (data.profileComplete === false) {
-        window.location.href = '/profile';
-      } else {
-        window.location.href = '/jobs';
+      // Actively check if user has completed their profile
+      const role = data.user?.role;
+      const profileEndpoint = role === 'EMPLOYER' ? '/profiles/employer' : '/profiles/job-seeker';
+      try {
+        const profileRes = await fetch(`http://13.60.192.118:3001${profileEndpoint}`, {
+          headers: { 'Authorization': `Bearer ${data.access_token}` }
+        });
+        if (profileRes.ok) {
+          const profile = await profileRes.json();
+          const hasProfile = role === 'EMPLOYER'
+            ? (profile && profile.companyName && profile.companyName.length > 0)
+            : (profile && profile.firstName && profile.firstName.length > 0);
+          if (hasProfile) {
+            window.location.href = '/jobs';
+            return;
+          }
+        }
+      } catch (profileErr) {
+        // If profile check fails, send to profile page to be safe
       }
+      // No profile found or check failed — send to complete profile
+      window.location.href = '/profile';
     } catch (err: any) {
       setError(err.message);
     } finally {
