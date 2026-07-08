@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'profile_screen.dart';
+import 'login_screen.dart';
 
 class EmployerDashboard extends StatefulWidget {
   const EmployerDashboard({super.key});
@@ -74,7 +75,11 @@ class _EmployerDashboardState extends State<EmployerDashboard> {
             onPressed: () async {
               final prefs = await SharedPreferences.getInstance();
               await prefs.remove('token');
-              Navigator.pushReplacementNamed(context, '/'); // Simplified route
+              if (!context.mounted) return;
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => const LoginScreen()),
+              );
             },
           )
         ],

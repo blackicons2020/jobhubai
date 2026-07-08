@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'jobs_screen.dart';
 import 'profile_screen.dart';
+import 'login_screen.dart';
 
 class SeekerDashboard extends StatefulWidget {
   const SeekerDashboard({super.key});
@@ -78,7 +79,11 @@ class _SeekerDashboardState extends State<SeekerDashboard> {
             onPressed: () async {
               final prefs = await SharedPreferences.getInstance();
               await prefs.remove('token');
-              Navigator.pushReplacementNamed(context, '/'); // Simplified route
+              if (!context.mounted) return;
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => const LoginScreen()),
+              );
             },
           )
         ],
