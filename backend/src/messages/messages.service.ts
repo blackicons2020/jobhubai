@@ -40,7 +40,7 @@ export class MessagesService {
     });
 
     // Group by conversation partner to get latest message per thread
-    const inbox = [];
+    const inbox: any[] = [];
     const seenUsers = new Set();
 
     for (const msg of messages) {
