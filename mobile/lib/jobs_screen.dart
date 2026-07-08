@@ -29,12 +29,20 @@ class _JobsScreenState extends State<JobsScreen> {
 
   Future<void> _fetchJobs() async {
     try {
-      final response = await http.get(Uri.parse('http://13.60.192.118:3001/jobs'));
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token');
+      
+      final response = await http.get(
+        Uri.parse('http://13.60.192.118:3001/jobs'),
+        headers: token != null ? {'Authorization': 'Bearer $token'} : {},
+      );
       if (response.statusCode == 200) {
         setState(() {
           _jobs = jsonDecode(response.body);
           _isLoading = false;
         });
+      } else {
+        setState(() => _isLoading = false);
       }
     } catch (e) {
       setState(() {

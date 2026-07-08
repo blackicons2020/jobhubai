@@ -106,4 +106,32 @@ export class JobsService {
 
     return job;
   }
+
+  async findMatchesForJob(userId: string, jobId: string) {
+    const employer = await this.prisma.employer.findUnique({ where: { userId } });
+    if (!employer) throw new ForbiddenException('No employer profile found.');
+
+    const job = await this.prisma.job.findUnique({ where: { id: jobId } });
+    if (!job || job.employerId !== employer.id) {
+      throw new ForbiddenException('You do not own this job posting.');
+    }
+
+    const jobText = (job.title + ' ' + job.description).toLowerCase();
+    const jobWords = jobText.split(/[^a-z0-9]/).filter(w => w.length > 3);
+
+    const profiles = await this.prisma.jobSeekerProfile.findMany({
+      include: { user: { select: { id: true, email: true } } }
+    });
+
+    const scored = profiles.map(profile => {
+      const profileText = ([...profile.skills, profile.bio, profile.resumeContent].join(' ')).toLowerCase();
+      let score = 0;
+      for (const word of jobWords) {
+        if (profileText.includes(word)) score++;
+      }
+      return { ...profile, matchScore: score };
+    }).filter(p => p.matchScore > 0).sort((a, b) => b.matchScore - a.matchScore);
+
+    return scored;
+  }
 }

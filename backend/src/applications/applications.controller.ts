@@ -16,6 +16,22 @@ export class ApplicationsController {
     return this.applicationsService.applyToJob(req.user.userId, jobId, body.coverLetter);
   }
 
+  @Post(':jobId/invite')
+  async invite(@Request() req, @Param('jobId') jobId: string, @Body() body: { jobSeekerId: string }) {
+    if (req.user.role !== 'EMPLOYER') {
+      throw new ForbiddenException('Only Employers can invite candidates.');
+    }
+    return this.applicationsService.inviteCandidate(req.user.userId, jobId, body.jobSeekerId);
+  }
+
+  @Patch(':id/seeker-status')
+  async seekerUpdateStatus(@Request() req, @Param('id') id: string, @Body() body: { status: ApplicationStatus }) {
+    if (req.user.role !== 'JOB_SEEKER') {
+      throw new ForbiddenException('Only Job Seekers can respond to invitations.');
+    }
+    return this.applicationsService.seekerUpdateStatus(req.user.userId, id, body.status);
+  }
+
   @Get('my-applications')
   async getMyApplications(@Request() req) {
     if (req.user.role !== 'JOB_SEEKER') {

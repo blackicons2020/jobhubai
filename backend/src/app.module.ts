@@ -13,6 +13,7 @@ import { AiModule } from './ai/ai.module';
 import { UploadsModule } from './uploads/uploads.module';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
+import { MessagesModule } from './messages/messages.module';
 
 @Module({
   imports: [
@@ -24,7 +25,7 @@ import { join } from 'path';
     }),
     PrismaModule, 
     UsersModule, 
-    AuthModule, ProfilesModule, JobsModule, ApplicationsModule, AiModule, UploadsModule
+    AuthModule, ProfilesModule, JobsModule, ApplicationsModule, AiModule, UploadsModule, MessagesModule
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -19,6 +19,8 @@ model User {
 
   jobSeekerProfile JobSeekerProfile?
   employer         Employer?
+  sentMessages     Message[] @relation("SentMessages")
+  receivedMessages Message[] @relation("ReceivedMessages")
 }
 
 enum Role {
@@ -98,4 +100,17 @@ enum ApplicationStatus {
   SHORTLISTED
   REJECTED
   HIRED
+  INVITED
+  ACCEPTED_OFFER
+  DECLINED_OFFER
+}
+
+model Message {
+  id          String   @id @default(uuid())
+  senderId    String
+  sender      User     @relation("SentMessages", fields: [senderId], references: [id])
+  receiverId  String
+  receiver    User     @relation("ReceivedMessages", fields: [receiverId], references: [id])
+  content     String
+  createdAt   DateTime @default(now())
 }

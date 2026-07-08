@@ -169,6 +169,11 @@ export default function JobsFeedPage() {
           <Link href="/profile">
             <button className="btn-primary" style={{ background: 'transparent', border: '1px solid var(--secondary-color)', boxShadow: 'none' }}>Profile</button>
           </Link>
+          {role === 'JOB_SEEKER' && (
+            <Link href="/seeker-dashboard">
+              <button className="btn-primary" style={{ background: 'transparent', border: '1px solid #ffd700', color: '#ffd700', boxShadow: 'none' }}>Dashboard</button>
+            </Link>
+          )}
           {role === 'EMPLOYER' && (
             <>
               <Link href="/applications">

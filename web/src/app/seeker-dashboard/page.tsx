@@ -2,11 +2,10 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 
-export default function EmployerDashboard() {
-  const [activeTab, setActiveTab] = useState<'JOBS' | 'MATCHES' | 'MESSAGES'>('JOBS');
-  const [jobs, setJobs] = useState<any[]>([]);
+export default function SeekerDashboard() {
+  const [activeTab, setActiveTab] = useState<'APPLIED' | 'INVITATIONS' | 'MESSAGES'>('APPLIED');
+  const [applications, setApplications] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
   
   // Messaging state
   const [inbox, setInbox] = useState<any[]>([]);
@@ -14,47 +13,33 @@ export default function EmployerDashboard() {
   const [chatMessages, setChatMessages] = useState<any[]>([]);
   const [newMessage, setNewMessage] = useState('');
 
-  // Matches state
-  const [selectedJobId, setSelectedJobId] = useState<string>('');
-  const [matches, setMatches] = useState<any[]>([]);
-  const [matching, setMatching] = useState(false);
-
   useEffect(() => {
-    const fetchJobs = async () => {
+    const fetchApplications = async () => {
       const token = localStorage.getItem('token');
       if (!token) {
         window.location.href = '/login';
         return;
       }
       try {
-        const res = await fetch('http://13.60.192.118:3001/jobs/employer/me', {
+        const res = await fetch('http://13.60.192.118:3001/applications/my-applications', {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         if (res.ok) {
           const data = await res.json();
-          setJobs(data);
-          if (data.length > 0) setSelectedJobId(data[0].id);
+          setApplications(data);
         }
       } catch (err) {
-        setError('Error fetching data');
+        console.error(err);
       } finally {
         setLoading(false);
       }
     };
-    fetchJobs();
+    fetchApplications();
   }, []);
 
   useEffect(() => {
-    if (activeTab === 'MESSAGES') {
-      fetchInbox();
-    }
+    if (activeTab === 'MESSAGES') fetchInbox();
   }, [activeTab]);
-
-  useEffect(() => {
-    if (activeTab === 'MATCHES' && selectedJobId) {
-      fetchMatches();
-    }
-  }, [activeTab, selectedJobId]);
 
   const fetchInbox = async () => {
     const token = localStorage.getItem('token');
@@ -79,19 +64,6 @@ export default function EmployerDashboard() {
     } catch (err) { console.error(err); }
   };
 
-  const fetchMatches = async () => {
-    setMatching(true);
-    const token = localStorage.getItem('token');
-    try {
-      const res = await fetch(`http://13.60.192.118:3001/jobs/${selectedJobId}/matches`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      if (res.ok) setMatches(await res.json());
-    } catch (err) { console.error(err); } finally {
-      setMatching(false);
-    }
-  };
-
   const sendMessage = async () => {
     if (!newMessage.trim() || !selectedChat) return;
     const token = localStorage.getItem('token');
@@ -108,75 +80,73 @@ export default function EmployerDashboard() {
     } catch (err) { console.error(err); }
   };
 
-  const handleInvite = async (userId: string) => {
+  const respondToInvitation = async (appId: string, accept: boolean) => {
     const token = localStorage.getItem('token');
     try {
-      const res = await fetch('http://13.60.192.118:3001/messages', {
-        method: 'POST',
+      const res = await fetch(`http://13.60.192.118:3001/applications/${appId}/seeker-status`, {
+        method: 'PATCH',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify({ receiverId: userId, content: `Hi! We think you'd be a great fit for our recent job posting. We invite you to apply!` })
+        body: JSON.stringify({ status: accept ? 'ACCEPTED_OFFER' : 'DECLINED_OFFER' })
       });
-      if (res.ok) alert('Invitation sent!');
+      if (res.ok) {
+        alert(accept ? 'Invitation Accepted!' : 'Invitation Declined');
+        setApplications(apps => apps.map(app => app.id === appId ? { ...app, status: accept ? 'ACCEPTED_OFFER' : 'DECLINED_OFFER' } : app));
+      }
     } catch (err) { console.error(err); }
   };
+
+  const regularApps = applications.filter(a => a.status !== 'INVITED' && a.status !== 'DECLINED_OFFER');
+  const invitations = applications.filter(a => a.status === 'INVITED' || a.status === 'ACCEPTED_OFFER');
 
   return (
     <main style={{ padding: '2rem 4rem', maxWidth: '1200px', margin: '0 auto' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-        <h1 style={{ fontSize: '2.5rem', margin: 0 }} className="text-gradient">Employer Dashboard</h1>
+        <h1 style={{ fontSize: '2.5rem', margin: 0 }} className="text-gradient">Job Seeker Dashboard</h1>
         <Link href="/jobs">
           <button className="btn-primary" style={{ background: 'transparent', border: '1px solid var(--secondary-color)', boxShadow: 'none' }}>Back to Job Board</button>
         </Link>
       </div>
 
       <div style={{ display: 'flex', gap: '1rem', marginBottom: '2rem', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '1rem' }}>
-        <button onClick={() => setActiveTab('JOBS')} style={{ background: 'none', border: 'none', color: activeTab === 'JOBS' ? '#00f0ff' : 'white', fontSize: '1.2rem', cursor: 'pointer', fontWeight: activeTab === 'JOBS' ? 'bold' : 'normal' }}>My Jobs</button>
-        <button onClick={() => setActiveTab('MATCHES')} style={{ background: 'none', border: 'none', color: activeTab === 'MATCHES' ? '#00f0ff' : 'white', fontSize: '1.2rem', cursor: 'pointer', fontWeight: activeTab === 'MATCHES' ? 'bold' : 'normal' }}>Match Candidates</button>
+        <button onClick={() => setActiveTab('APPLIED')} style={{ background: 'none', border: 'none', color: activeTab === 'APPLIED' ? '#00f0ff' : 'white', fontSize: '1.2rem', cursor: 'pointer', fontWeight: activeTab === 'APPLIED' ? 'bold' : 'normal' }}>Applied Jobs</button>
+        <button onClick={() => setActiveTab('INVITATIONS')} style={{ background: 'none', border: 'none', color: activeTab === 'INVITATIONS' ? '#00f0ff' : 'white', fontSize: '1.2rem', cursor: 'pointer', fontWeight: activeTab === 'INVITATIONS' ? 'bold' : 'normal' }}>Invitations & Offers</button>
         <button onClick={() => setActiveTab('MESSAGES')} style={{ background: 'none', border: 'none', color: activeTab === 'MESSAGES' ? '#00f0ff' : 'white', fontSize: '1.2rem', cursor: 'pointer', fontWeight: activeTab === 'MESSAGES' ? 'bold' : 'normal' }}>Messages</button>
       </div>
 
       {loading ? <p>Loading...</p> : (
         <>
-          {activeTab === 'JOBS' && (
-             <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-             {jobs.length === 0 ? <p>You haven't posted any jobs yet.</p> : jobs.map(job => (
-               <div key={job.id} className="glass-panel" style={{ padding: '1.5rem 2rem' }}>
-                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '1rem', marginBottom: '1rem' }}>
-                   <h2 style={{ fontSize: '1.5rem', margin: 0 }}>{job.title}</h2>
-                   <span style={{ background: 'rgba(0, 240, 255, 0.2)', color: '#00f0ff', padding: '4px 12px', borderRadius: '16px', fontSize: '0.9rem', fontWeight: 'bold' }}>
-                     {job._count?.applications || 0} Applications
-                   </span>
-                 </div>
-                 <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                   <button className="btn-primary" style={{ padding: '8px 24px', fontSize: '0.9rem' }} onClick={() => window.alert('Detailed view of applications coming soon!')}>
-                     View Applications
-                   </button>
-                 </div>
-               </div>
-             ))}
-           </div>
+          {activeTab === 'APPLIED' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+              {regularApps.length === 0 ? <p>No job applications yet.</p> : regularApps.map(app => (
+                <div key={app.id} className="glass-panel" style={{ padding: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div>
+                    <h2 style={{ fontSize: '1.2rem', margin: 0 }}>{app.job.title}</h2>
+                    <p style={{ color: 'var(--text-secondary)', margin: '4px 0' }}>{app.job.employer.companyName}</p>
+                  </div>
+                  <span style={{ padding: '6px 16px', borderRadius: '20px', background: 'rgba(255,255,255,0.1)' }}>{app.status}</span>
+                </div>
+              ))}
+            </div>
           )}
 
-          {activeTab === 'MATCHES' && (
-            <div className="glass-panel">
-              <h2 style={{marginTop:0}}>Discover Top Candidates</h2>
-              <select value={selectedJobId} onChange={(e) => setSelectedJobId(e.target.value)} style={{ width: '100%', padding: '12px', marginBottom: '1rem', borderRadius: '8px', background: 'rgba(255,255,255,0.1)', color: 'white', border: '1px solid rgba(255,255,255,0.2)' }}>
-                {jobs.map(job => <option key={job.id} value={job.id}>{job.title}</option>)}
-              </select>
-              
-              {matching ? <p>Finding best matches...</p> : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                  {matches.length === 0 ? <p>No exact matches found yet.</p> : matches.map(m => (
-                    <div key={m.id} style={{ padding: '1rem', background: 'rgba(0,0,0,0.3)', borderRadius: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <div>
-                        <h3 style={{margin:0}}>{m.firstName} {m.lastName} <span style={{fontSize: '0.8rem', color: '#00f0ff', marginLeft: '8px'}}>(Match Score: {m.matchScore})</span></h3>
-                        <p style={{fontSize:'0.9rem', color: 'var(--text-secondary)', margin: '4px 0'}}>{m.skills.join(', ')}</p>
-                      </div>
-                      <button className="btn-primary" style={{ padding: '8px 16px', fontSize: '0.9rem' }} onClick={() => handleInvite(m.user.id)}>Invite</button>
+          {activeTab === 'INVITATIONS' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+              {invitations.length === 0 ? <p>No invitations yet.</p> : invitations.map(app => (
+                <div key={app.id} className="glass-panel" style={{ padding: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderLeft: app.status === 'INVITED' ? '4px solid #00f0ff' : '4px solid #00ff00' }}>
+                  <div>
+                    <h2 style={{ fontSize: '1.2rem', margin: 0 }}>{app.job.title}</h2>
+                    <p style={{ color: 'var(--text-secondary)', margin: '4px 0' }}>You were invited by {app.job.employer.companyName}!</p>
+                  </div>
+                  {app.status === 'INVITED' ? (
+                    <div style={{ display: 'flex', gap: '1rem' }}>
+                      <button className="btn-primary" style={{ padding: '8px 16px' }} onClick={() => respondToInvitation(app.id, true)}>Accept</button>
+                      <button className="btn-primary" style={{ padding: '8px 16px', background: 'transparent', border: '1px solid #ff4d4d', color: '#ff4d4d' }} onClick={() => respondToInvitation(app.id, false)}>Decline</button>
                     </div>
-                  ))}
+                  ) : (
+                    <span style={{ color: '#00ff00', fontWeight: 'bold' }}>Accepted! 🎉</span>
+                  )}
                 </div>
-              )}
+              ))}
             </div>
           )}
 
@@ -186,7 +156,7 @@ export default function EmployerDashboard() {
                 <h3 style={{marginTop:0}}>Inbox</h3>
                 {inbox.map(thread => (
                   <div key={thread.otherUserId} onClick={() => fetchChat(thread.otherUserId)} style={{ padding: '1rem', borderBottom: '1px solid rgba(255,255,255,0.1)', cursor: 'pointer', background: selectedChat === thread.otherUserId ? 'rgba(255,255,255,0.1)' : 'transparent' }}>
-                    <strong>{thread.otherUser?.jobSeekerProfile?.firstName || 'Candidate'}</strong>
+                    <strong>{thread.otherUser?.employer?.companyName || 'Employer'}</strong>
                     <p style={{ margin: '4px 0 0 0', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
                       {thread.latestMessage.content.substring(0, 40)}...
                     </p>

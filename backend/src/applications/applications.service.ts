@@ -72,22 +72,78 @@ export class ApplicationsService {
     });
   }
 
-  async updateStatus(userId: string, applicationId: string, status: ApplicationStatus) {
-    const employer = await this.prisma.employer.findUnique({ where: { userId } });
-    if (!employer) throw new ForbiddenException('Employer profile not found.');
-
+  async updateStatus(employerUserId: string, applicationId: string, status: ApplicationStatus) {
+    // Verify employer owns the job
     const application = await this.prisma.application.findUnique({
       where: { id: applicationId },
       include: { job: true },
     });
 
-    if (!application || application.job.employerId !== employer.id) {
-      throw new ForbiddenException('You do not own the job for this application.');
+    if (!application) {
+      throw new NotFoundException('Application not found');
+    }
+
+    const employer = await this.prisma.employer.findUnique({
+      where: { userId: employerUserId },
+    });
+
+    if (application.job.employerId !== employer?.id) {
+      throw new ForbiddenException('You do not have permission to update this application.');
     }
 
     return this.prisma.application.update({
       where: { id: applicationId },
       data: { status },
+    });
+  }
+
+  async inviteCandidate(employerUserId: string, jobId: string, jobSeekerUserId: string) {
+    const employer = await this.prisma.employer.findUnique({ where: { userId: employerUserId } });
+    if (!employer) throw new ForbiddenException('Employer profile required.');
+
+    const job = await this.prisma.job.findUnique({ where: { id: jobId } });
+    if (!job || job.employerId !== employer.id) throw new ForbiddenException('You do not own this job.');
+
+    const profile = await this.prisma.jobSeekerProfile.findUnique({ where: { userId: jobSeekerUserId } });
+    if (!profile) throw new NotFoundException('Job seeker not found.');
+
+    const existingApp = await this.prisma.application.findFirst({
+      where: { jobId, jobSeekerId: profile.id }
+    });
+
+    if (existingApp) {
+      return this.prisma.application.update({
+        where: { id: existingApp.id },
+        data: { status: 'INVITED' }
+      });
+    }
+
+    return this.prisma.application.create({
+      data: {
+        jobId,
+        jobSeekerId: profile.id,
+        status: 'INVITED'
+      }
+    });
+  }
+
+  async seekerUpdateStatus(jobSeekerUserId: string, applicationId: string, status: ApplicationStatus) {
+    const profile = await this.prisma.jobSeekerProfile.findUnique({ where: { userId: jobSeekerUserId } });
+    if (!profile) throw new NotFoundException('Profile not found');
+
+    const application = await this.prisma.application.findUnique({ where: { id: applicationId } });
+    if (!application || application.jobSeekerId !== profile.id) {
+      throw new ForbiddenException('Not your application');
+    }
+
+    // Only allow specific transitions like accepting or declining offers/invitations
+    if (!['ACCEPTED_OFFER', 'DECLINED_OFFER'].includes(status)) {
+      throw new ForbiddenException('Invalid status update for job seeker');
+    }
+
+    return this.prisma.application.update({
+      where: { id: applicationId },
+      data: { status }
     });
   }
 }

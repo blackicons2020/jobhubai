@@ -31,6 +31,15 @@ export class JobsController {
     return this.jobsService.findFeed(req.user.userId);
   }
 
+  @Get(':id/matches')
+  @UseGuards(JwtAuthGuard)
+  async getMatches(@Request() req, @Param('id') id: string) {
+    if (req.user.role !== 'EMPLOYER') {
+      throw new ForbiddenException('Only EMPLOYERs can view matches.');
+    }
+    return this.jobsService.findMatchesForJob(req.user.userId, id);
+  }
+
   @Get(':id')
   async findOne(@Param('id') id: string) {
     return this.jobsService.findOne(id);
