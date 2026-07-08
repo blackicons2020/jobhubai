@@ -2,11 +2,24 @@ import { Controller, Post, Get, Put, Body, UseGuards, Request, ForbiddenExceptio
 import { ProfilesService } from './profiles.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { Prisma } from '@prisma/client';
+import { PrismaService } from '../prisma/prisma.service';
 
 @Controller('profiles')
 @UseGuards(JwtAuthGuard)
 export class ProfilesController {
-  constructor(private readonly profilesService: ProfilesService) {}
+  constructor(
+    private readonly profilesService: ProfilesService,
+    private readonly prisma: PrismaService
+  ) {}
+
+  @Post('upgrade')
+  async upgradeToPremium(@Request() req) {
+    await this.prisma.user.update({
+      where: { id: req.user.userId },
+      data: { subscriptionTier: 'PREMIUM' }
+    });
+    return { success: true, message: 'Upgraded to Premium' };
+  }
 
   @Post('job-seeker')
   async createJobSeekerProfile(@Request() req, @Body() data: Omit<Prisma.JobSeekerProfileCreateWithoutUserInput, 'applications'>) {

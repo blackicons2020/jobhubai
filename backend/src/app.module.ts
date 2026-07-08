@@ -11,11 +11,17 @@ import { JobsModule } from './jobs/jobs.module';
 import { ApplicationsModule } from './applications/applications.module';
 import { AiModule } from './ai/ai.module';
 import { UploadsModule } from './uploads/uploads.module';
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { join } from 'path';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     ScheduleModule.forRoot(),
+    ServeStaticModule.forRoot({
+      rootPath: join(process.cwd(), '..', 'public'),
+      serveRoot: '/',
+    }),
     PrismaModule, 
     UsersModule, 
     AuthModule, ProfilesModule, JobsModule, ApplicationsModule, AiModule, UploadsModule

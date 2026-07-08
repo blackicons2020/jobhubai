@@ -16,10 +16,19 @@ export class JobsController {
     return this.jobsService.createJob(req.user.userId, data);
   }
 
+  @Get('employer/me')
+  @UseGuards(JwtAuthGuard)
+  async findMyJobs(@Request() req) {
+    if (req.user.role !== 'EMPLOYER') {
+      throw new ForbiddenException('Only EMPLOYERs can view their posted jobs.');
+    }
+    return this.jobsService.findEmployerJobs(req.user.userId);
+  }
+
   @Get()
-  async findAll() {
-    // Anyone can view jobs (public endpoint)
-    return this.jobsService.findAll();
+  @UseGuards(JwtAuthGuard)
+  async findFeed(@Request() req) {
+    return this.jobsService.findFeed(req.user.userId);
   }
 
   @Get(':id')

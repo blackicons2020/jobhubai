@@ -12,6 +12,10 @@ export default function JobsFeedPage() {
   const [success, setSuccess] = useState('');
   const [generatingCoverLetter, setGeneratingCoverLetter] = useState(false);
 
+  const [role, setRole] = useState<'JOB_SEEKER' | 'EMPLOYER' | null>(null);
+  const [subscriptionTier, setSubscriptionTier] = useState<'FREE' | 'PREMIUM'>('FREE');
+  const [freeGenerationsUsed, setFreeGenerationsUsed] = useState(0);
+
   useEffect(() => {
     // Guard: check if user has a completed profile before allowing access to jobs
     const checkProfileAndFetch = async () => {
@@ -21,34 +25,39 @@ export default function JobsFeedPage() {
         return;
       }
 
-      // Try job-seeker profile first, then employer
-      let hasProfile = false;
       try {
-        const seekerRes = await fetch('http://13.60.192.118:3001/profiles/job-seeker', {
+        const authRes = await fetch('http://13.60.192.118:3001/auth/me', {
           headers: { 'Authorization': `Bearer ${token}` }
         });
-        if (seekerRes.ok) {
-          const profile = await seekerRes.json();
-          if (profile && profile.firstName && profile.firstName.length > 0) {
-            hasProfile = true;
-          }
-        }
-        if (!hasProfile) {
-          const employerRes = await fetch('http://13.60.192.118:3001/profiles/employer', {
+        if (authRes.ok) {
+          const user = await authRes.json();
+          setRole(user.role);
+          setSubscriptionTier(user.subscriptionTier);
+          setFreeGenerationsUsed(user.freeGenerationsUsed);
+          
+          // Verify profile exists
+          const endpoint = user.role === 'JOB_SEEKER' ? '/profiles/job-seeker' : '/profiles/employer';
+          const profileRes = await fetch(`http://13.60.192.118:3001${endpoint}`, {
             headers: { 'Authorization': `Bearer ${token}` }
           });
-          if (employerRes.ok) {
-            const profile = await employerRes.json();
-            if (profile && profile.companyName && profile.companyName.length > 0) {
-              hasProfile = true;
-            }
+          
+          if (!profileRes.ok) {
+            window.location.href = '/profile';
+            return;
           }
+          const profile = await profileRes.json();
+          if (user.role === 'JOB_SEEKER' && (!profile.firstName || profile.firstName.length === 0)) {
+            window.location.href = '/profile';
+            return;
+          } else if (user.role === 'EMPLOYER' && (!profile.companyName || profile.companyName.length === 0)) {
+            window.location.href = '/profile';
+            return;
+          }
+        } else {
+          window.location.href = '/profile';
+          return;
         }
       } catch (err) {
-        // Profile check failed, redirect to profile to be safe
-      }
-
-      if (!hasProfile) {
         window.location.href = '/profile';
         return;
       }
@@ -60,7 +69,10 @@ export default function JobsFeedPage() {
 
   const fetchJobs = async () => {
     try {
-      const res = await fetch('http://13.60.192.118:3001/jobs');
+      const token = localStorage.getItem('token');
+      const res = await fetch('http://13.60.192.118:3001/jobs', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
       if (res.ok) {
         const data = await res.json();
         setJobs(data);
@@ -118,14 +130,24 @@ export default function JobsFeedPage() {
 
       const res = await fetch('http://13.60.192.118:3001/ai/cover-letter/generate', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify({
           profile: profileData,
           job: job
         })
       });
       const data = await res.json();
-      setCoverLetter(data.cover_letter);
+      if (res.ok) {
+        setCoverLetter(data.cover_letter);
+        if (subscriptionTier === 'FREE') {
+          setFreeGenerationsUsed(prev => prev + 1);
+        }
+      } else {
+        setError(data.message || 'Failed to generate cover letter.');
+      }
     } catch (err) {
       console.error(err);
       setError('Failed to generate cover letter.');
@@ -147,9 +169,16 @@ export default function JobsFeedPage() {
           <Link href="/profile">
             <button className="btn-primary" style={{ background: 'transparent', border: '1px solid var(--secondary-color)', boxShadow: 'none' }}>Profile</button>
           </Link>
-          <Link href="/jobs/create">
-            <button className="btn-primary">Post a Job</button>
-          </Link>
+          {role === 'EMPLOYER' && (
+            <>
+              <Link href="/applications">
+                <button className="btn-primary" style={{ background: 'transparent', border: '1px solid #ffd700', color: '#ffd700', boxShadow: 'none' }}>Applications</button>
+              </Link>
+              <Link href="/jobs/create">
+                <button className="btn-primary">Post a Job</button>
+              </Link>
+            </>
+          )}
           <button 
             className="btn-primary" 
             style={{ background: 'transparent', border: '1px solid #ff4d4d', color: '#ff4d4d', boxShadow: 'none' }}
@@ -212,13 +241,15 @@ export default function JobsFeedPage() {
                     <span>💰 {job.salary || 'Competitive'}</span>
                   </div>
                 </div>
-                <button 
-                  className="btn-primary" 
-                  style={{ padding: '8px 24px' }}
-                  onClick={() => setApplyingJobId(applyingJobId === job.id ? null : job.id)}
-                >
-                  {applyingJobId === job.id ? 'Cancel' : 'Apply Now'}
-                </button>
+                {role === 'JOB_SEEKER' && (
+                  <button 
+                    className="btn-primary" 
+                    style={{ padding: '8px 24px' }}
+                    onClick={() => setApplyingJobId(applyingJobId === job.id ? null : job.id)}
+                  >
+                    {applyingJobId === job.id ? 'Cancel' : 'Apply Now'}
+                  </button>
+                )}
               </div>
 
               {/* Optional Cover Letter Section */}
@@ -226,8 +257,13 @@ export default function JobsFeedPage() {
                 <div style={{ marginTop: '1.5rem', padding: '1.5rem', background: 'rgba(0,0,0,0.2)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
                   <h3 style={{ margin: '0 0 1rem 0', fontSize: '1.1rem' }}>Submit Application</h3>
                   <p style={{ margin: '0 0 1rem 0', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
-                    Would you like to include an optional cover letter? (Pro tip: AI Cover Letter generation is coming soon for premium subscribers!)
+                    Would you like to include an optional cover letter?
                   </p>
+                  
+                  {subscriptionTier === 'FREE' && freeGenerationsUsed >= 1 && (
+                    <div style={{ color: '#ff8c00', marginBottom: '1rem', fontSize: '0.9rem' }}>⚠️ You have used your 1 free generation. Please upgrade to Premium to generate more!</div>
+                  )}
+                  
                   <textarea 
                     value={coverLetter}
                     onChange={(e) => setCoverLetter(e.target.value)}
@@ -239,7 +275,7 @@ export default function JobsFeedPage() {
                     <button 
                       className="btn-primary" 
                       onClick={() => handleGenerateCoverLetter(job)}
-                      disabled={generatingCoverLetter}
+                      disabled={generatingCoverLetter || (subscriptionTier === 'FREE' && freeGenerationsUsed >= 1)}
                       style={{ background: 'linear-gradient(135deg, #00f0ff 0%, #0080ff 100%)', padding: '8px 16px', fontSize: '0.9rem' }}
                     >
                       {generatingCoverLetter ? 'Generating...' : '✨ Generate AI Cover Letter'}

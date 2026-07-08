@@ -3,7 +3,9 @@ import { useState, useEffect } from 'react';
 import Image from 'next/image';
 
 export default function ProfilePage() {
-  const [role, setRole] = useState<'JOB_SEEKER' | 'EMPLOYER'>('JOB_SEEKER');
+  const [role, setRole] = useState<'JOB_SEEKER' | 'EMPLOYER' | null>(null);
+  const [subscriptionTier, setSubscriptionTier] = useState<'FREE' | 'PREMIUM'>('FREE');
+  const [freeGenerationsUsed, setFreeGenerationsUsed] = useState(0);
   
   // Shared State
   const [profilePicture, setProfilePicture] = useState('');
@@ -15,8 +17,12 @@ export default function ProfilePage() {
   const [bio, setBio] = useState('');
   const [autoApplyEnabled, setAutoApplyEnabled] = useState(false);
   const [autoApplyKeywords, setAutoApplyKeywords] = useState('');
+  
   const [resumeContent, setResumeContent] = useState('');
   const [generating, setGenerating] = useState(false);
+  const [showAiForm, setShowAiForm] = useState(false);
+  const [aiSkills, setAiSkills] = useState('');
+  const [aiExperience, setAiExperience] = useState('');
   
   // Employer State
   const [companyName, setCompanyName] = useState('');
@@ -29,8 +35,54 @@ export default function ProfilePage() {
       window.location.href = '/login';
       return;
     }
-    // Fetch logic would go here
+
+    const fetchMe = async () => {
+      try {
+        const res = await fetch('http://13.60.192.118:3001/auth/me', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const user = await res.json();
+          setRole(user.role);
+          setSubscriptionTier(user.subscriptionTier);
+          setFreeGenerationsUsed(user.freeGenerationsUsed);
+          fetchProfile(user.role, token);
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    fetchMe();
   }, []);
+
+  const fetchProfile = async (currentRole: string, token: string) => {
+    try {
+      const endpoint = currentRole === 'JOB_SEEKER' ? '/profiles/job-seeker' : '/profiles/employer';
+      const res = await fetch(`http://13.60.192.118:3001${endpoint}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (currentRole === 'JOB_SEEKER') {
+          setFirstName(data.firstName || '');
+          setLastName(data.lastName || '');
+          setBio(data.bio || '');
+          setProfilePicture(data.profilePicture || '');
+          setAutoApplyEnabled(data.autoApplyEnabled || false);
+          setAutoApplyKeywords((data.autoApplyKeywords || []).join(', '));
+          setResumeContent(data.resumeContent || '');
+        } else {
+          setCompanyName(data.companyName || '');
+          setBio(data.description || '');
+          setWebsite(data.website || '');
+          setProfilePicture(data.profilePicture || '');
+        }
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -51,7 +103,7 @@ export default function ProfilePage() {
       });
       const data = await res.json();
       if (res.ok) {
-        setProfilePicture(data.url);
+        setProfilePicture(`http://13.60.192.118:3001${data.url}`);
       }
     } catch (err) {
       console.error(err);
@@ -61,19 +113,55 @@ export default function ProfilePage() {
   };
 
   const handleGenerateResume = async () => {
+    const token = localStorage.getItem('token');
     setGenerating(true);
     try {
       const res = await fetch('http://13.60.192.118:3001/ai/resume/generate', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ first_name: firstName, last_name: lastName, bio, skills: [] })
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ 
+          first_name: firstName, 
+          last_name: lastName, 
+          bio, 
+          skills: aiSkills.split(',').map(s => s.trim()),
+          experience: aiExperience 
+        })
       });
+      
       const data = await res.json();
-      setResumeContent(data.resume);
+      if (res.ok) {
+        setResumeContent(data.resume);
+        setShowAiForm(false);
+        if (subscriptionTier === 'FREE') {
+          setFreeGenerationsUsed(prev => prev + 1);
+        }
+      } else {
+        alert(data.message || 'Generation failed');
+      }
     } catch (err) {
       console.error(err);
+      alert('Error generating resume');
     } finally {
       setGenerating(false);
+    }
+  };
+
+  const handleUpgrade = async () => {
+    const token = localStorage.getItem('token');
+    try {
+      const res = await fetch('http://13.60.192.118:3001/profiles/upgrade', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        setSubscriptionTier('PREMIUM');
+        alert('Upgraded to Premium!');
+      }
+    } catch (err) {
+      console.error(err);
     }
   };
 
@@ -84,14 +172,14 @@ export default function ProfilePage() {
 
     const endpoint = role === 'JOB_SEEKER' ? '/profiles/job-seeker' : '/profiles/employer';
     const payload = role === 'JOB_SEEKER' ? {
-      firstName, lastName, bio, profilePicture, autoApplyEnabled, autoApplyKeywords: autoApplyKeywords.split(',').map(s => s.trim())
+      firstName, lastName, bio, profilePicture, resumeContent, autoApplyEnabled, autoApplyKeywords: autoApplyKeywords.split(',').map(s => s.trim()).filter(Boolean)
     } : {
       companyName, description: bio, website, profilePicture
     };
 
     try {
       const res = await fetch(`http://13.60.192.118:3001${endpoint}`, {
-        method: 'POST',
+        method: role === 'JOB_SEEKER' && firstName ? 'PUT' : 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
@@ -101,20 +189,41 @@ export default function ProfilePage() {
       
       if (res.ok) {
         window.location.href = '/jobs';
+      } else {
+        const retryRes = await fetch(`http://13.60.192.118:3001${endpoint}`, {
+          method: role === 'JOB_SEEKER' && firstName ? 'POST' : 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify(payload)
+        });
+        if (retryRes.ok) window.location.href = '/jobs';
       }
     } catch (err) {
       console.error(err);
     }
   };
 
+  if (!role) return <div style={{ padding: '4rem', textAlign: 'center', color: 'white' }}>Loading...</div>;
+
   return (
     <main style={{ padding: '4rem', maxWidth: '800px', margin: '0 auto' }}>
       <div className="glass-panel">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
           <h1 style={{ fontSize: '2.5rem', margin: 0 }} className="text-gradient">
-            Complete Your Profile
+            {role === 'JOB_SEEKER' ? 'Job Seeker Profile' : 'Employer Profile'}
           </h1>
           <div style={{ display: 'flex', gap: '1rem' }}>
+            {subscriptionTier === 'FREE' && (
+              <button 
+                className="btn-primary" 
+                style={{ background: 'linear-gradient(135deg, #ffd700 0%, #ff8c00 100%)', border: 'none', color: '#000', fontWeight: 'bold' }}
+                onClick={handleUpgrade}
+              >
+                🌟 Upgrade to Premium
+              </button>
+            )}
             <button 
               className="btn-primary" 
               style={{ background: 'transparent', border: '1px solid var(--secondary-color)', boxShadow: 'none' }}
@@ -135,36 +244,21 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        <div style={{ display: 'flex', gap: '1rem', marginBottom: '2rem', justifyContent: 'center' }}>
-          <button 
-            className="btn-primary" 
-            style={{ opacity: role === 'JOB_SEEKER' ? 1 : 0.5 }}
-            onClick={() => setRole('JOB_SEEKER')}
-          >
-            I am a Job Seeker
-          </button>
-          <button 
-            className="btn-primary" 
-            style={{ opacity: role === 'EMPLOYER' ? 1 : 0.5 }}
-            onClick={() => setRole('EMPLOYER')}
-          >
-            I am an Employer
-          </button>
-        </div>
-
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '2rem' }}>
-          <div style={{ width: 120, height: 120, borderRadius: '50%', overflow: 'hidden', backgroundColor: 'rgba(255,255,255,0.1)', marginBottom: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            {profilePicture ? (
-              <img src={profilePicture} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-            ) : (
-              <span style={{ color: 'rgba(255,255,255,0.5)' }}>No Image</span>
-            )}
+        {role === 'JOB_SEEKER' && (
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '2rem' }}>
+            <div style={{ width: 120, height: 120, borderRadius: '50%', overflow: 'hidden', backgroundColor: 'rgba(255,255,255,0.1)', marginBottom: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              {profilePicture ? (
+                <img src={profilePicture} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              ) : (
+                <span style={{ color: 'rgba(255,255,255,0.5)' }}>No Image</span>
+              )}
+            </div>
+            <label className="btn-primary" style={{ cursor: 'pointer', padding: '0.5rem 1rem', fontSize: '0.9rem' }}>
+              {uploading ? 'Uploading...' : 'Upload Picture'}
+              <input type="file" accept="image/*" style={{ display: 'none' }} onChange={handleFileUpload} disabled={uploading} />
+            </label>
           </div>
-          <label className="btn-primary" style={{ cursor: 'pointer', padding: '0.5rem 1rem', fontSize: '0.9rem' }}>
-            {uploading ? 'Uploading...' : 'Upload Picture'}
-            <input type="file" accept="image/*" style={{ display: 'none' }} onChange={handleFileUpload} disabled={uploading} />
-          </label>
-        </div>
+        )}
 
         <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
           {role === 'JOB_SEEKER' ? (
@@ -173,8 +267,48 @@ export default function ProfilePage() {
                 <input type="text" placeholder="First Name" value={firstName} onChange={(e) => setFirstName(e.target.value)} style={inputStyle} required />
                 <input type="text" placeholder="Last Name" value={lastName} onChange={(e) => setLastName(e.target.value)} style={inputStyle} required />
               </div>
+              
               <textarea placeholder="Professional Bio" value={bio} onChange={(e) => setBio(e.target.value)} style={{ ...inputStyle, minHeight: '120px', resize: 'vertical' }} />
               
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                <label style={{ color: 'var(--text-secondary)' }}>Resume / CV (Paste here or use AI Generator)</label>
+                <textarea 
+                  placeholder="Paste your existing resume here..." 
+                  value={resumeContent} 
+                  onChange={(e) => setResumeContent(e.target.value)} 
+                  style={{ ...inputStyle, minHeight: '200px', resize: 'vertical' }} 
+                />
+              </div>
+
+              {!showAiForm ? (
+                <button type="button" className="btn-primary" onClick={() => setShowAiForm(true)} style={{ background: 'rgba(255,255,255,0.1)' }}>
+                  Need a Resume? Open AI Generator
+                </button>
+              ) : (
+                <div style={{ background: 'rgba(0,0,0,0.3)', padding: '1.5rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)' }}>
+                  <h3 style={{ marginTop: 0 }}>✨ AI Resume Generator</h3>
+                  {subscriptionTier === 'FREE' && freeGenerationsUsed >= 1 && (
+                    <div style={{ color: '#ff8c00', marginBottom: '1rem' }}>⚠️ You have used your 1 free generation. Please upgrade to Premium to generate more!</div>
+                  )}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                    <input type="text" placeholder="Key Skills (comma separated)" value={aiSkills} onChange={(e) => setAiSkills(e.target.value)} style={inputStyle} />
+                    <textarea placeholder="Briefly describe your work experience..." value={aiExperience} onChange={(e) => setAiExperience(e.target.value)} style={{ ...inputStyle, minHeight: '100px' }} />
+                    <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end' }}>
+                      <button type="button" onClick={() => setShowAiForm(false)} style={{ background: 'transparent', color: 'white', border: 'none', cursor: 'pointer' }}>Cancel</button>
+                      <button 
+                        type="button" 
+                        className="btn-primary" 
+                        onClick={handleGenerateResume} 
+                        disabled={generating || !firstName || !lastName || (subscriptionTier === 'FREE' && freeGenerationsUsed >= 1)} 
+                        style={{ background: 'linear-gradient(135deg, #00f0ff 0%, #0080ff 100%)' }}
+                      >
+                        {generating ? 'Generating...' : 'Generate Resume'}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <div style={{ background: 'rgba(0,0,0,0.2)', padding: '1.5rem', borderRadius: '12px' }}>
                 <h3 style={{ marginTop: 0 }}>AI Autonomous Applications</h3>
                 <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem', cursor: 'pointer' }}>
@@ -185,18 +319,6 @@ export default function ProfilePage() {
                   <input type="text" placeholder="Keywords to target (e.g. Flutter, React, Manager)" value={autoApplyKeywords} onChange={(e) => setAutoApplyKeywords(e.target.value)} style={inputStyle} />
                 )}
               </div>
-
-              <div style={{ display: 'flex', gap: '1rem' }}>
-                <button type="button" className="btn-primary" onClick={handleGenerateResume} disabled={generating || !firstName || !lastName || !bio} style={{ flex: 1, background: 'linear-gradient(135deg, #00f0ff 0%, #0080ff 100%)' }}>
-                  {generating ? 'Generating...' : '✨ Generate AI Resume & Profile'}
-                </button>
-              </div>
-
-              {resumeContent && (
-                <div style={{ background: 'rgba(255,255,255,0.05)', padding: '1rem', borderRadius: '8px', whiteSpace: 'pre-wrap', maxHeight: 300, overflowY: 'auto', fontSize: '0.9rem' }}>
-                  {resumeContent}
-                </div>
-              )}
             </>
           ) : (
             <>

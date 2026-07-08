@@ -60,4 +60,18 @@ export class AuthService {
       profileComplete,
     };
   }
+
+  async getUserDetails(userId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        email: true,
+        role: true,
+        subscriptionTier: true,
+        freeGenerationsUsed: true,
+      }
+    });
+    return user;
+  }
 }
