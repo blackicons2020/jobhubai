@@ -22,11 +22,15 @@ export class ProfilesController {
   }
 
   @Post('job-seeker')
-  async createJobSeekerProfile(@Request() req, @Body() data: Omit<Prisma.JobSeekerProfileCreateWithoutUserInput, 'applications'>) {
+  async upsertJobSeekerProfile(@Request() req, @Body() data: Prisma.JobSeekerProfileUpdateInput & Prisma.JobSeekerProfileCreateWithoutUserInput) {
     if (req.user.role !== 'JOB_SEEKER') {
       throw new ForbiddenException('Only JOB_SEEKERs can create this profile type.');
     }
-    return this.profilesService.createJobSeekerProfile(req.user.userId, data);
+    // ensure skills is initialized if undefined
+    if (data.skills === undefined) {
+      data.skills = [];
+    }
+    return this.profilesService.upsertJobSeekerProfile(req.user.userId, data);
   }
 
   @Get('job-seeker')
@@ -37,20 +41,12 @@ export class ProfilesController {
     return this.profilesService.getJobSeekerProfile(req.user.userId);
   }
 
-  @Put('job-seeker')
-  async updateJobSeekerProfile(@Request() req, @Body() data: Prisma.JobSeekerProfileUpdateInput) {
-    if (req.user.role !== 'JOB_SEEKER') {
-      throw new ForbiddenException('Only JOB_SEEKERs can update this profile type.');
-    }
-    return this.profilesService.updateJobSeekerProfile(req.user.userId, data);
-  }
-
   @Post('employer')
-  async createEmployerProfile(@Request() req, @Body() data: Omit<Prisma.EmployerCreateWithoutUserInput, 'jobs'>) {
+  async upsertEmployerProfile(@Request() req, @Body() data: Prisma.EmployerUpdateInput & Prisma.EmployerCreateWithoutUserInput) {
     if (req.user.role !== 'EMPLOYER') {
       throw new ForbiddenException('Only EMPLOYERs can create this profile type.');
     }
-    return this.profilesService.createEmployerProfile(req.user.userId, data);
+    return this.profilesService.upsertEmployerProfile(req.user.userId, data);
   }
 
   @Get('employer')

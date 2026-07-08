@@ -9,6 +9,8 @@ export const metadata: Metadata = {
   description: 'A premium AI-powered platform connecting talent with opportunity.',
 };
 
+import Header from '../components/Header';
+
 export default function RootLayout({
   children,
 }: {
@@ -16,7 +18,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={outfit.className}>{children}</body>
+      <body className={outfit.className}>
+        <Header />
+        {children}
+      </body>
     </html>
   );
 }

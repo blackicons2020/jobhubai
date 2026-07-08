@@ -5,7 +5,7 @@ import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class AiService {
-  private readonly fastApiUrl = 'http://localhost:8000/ai';
+  private readonly fastApiUrl = process.env.AI_SERVICE_URL || 'http://ai_service:8000/ai';
 
   constructor(
     private readonly httpService: HttpService,

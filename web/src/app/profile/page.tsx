@@ -172,14 +172,14 @@ export default function ProfilePage() {
 
     const endpoint = role === 'JOB_SEEKER' ? '/profiles/job-seeker' : '/profiles/employer';
     const payload = role === 'JOB_SEEKER' ? {
-      firstName, lastName, bio, profilePicture, resumeContent, autoApplyEnabled, autoApplyKeywords: autoApplyKeywords.split(',').map(s => s.trim()).filter(Boolean)
+      firstName, lastName, bio, profilePicture, resumeContent, autoApplyEnabled, autoApplyKeywords: autoApplyKeywords.split(',').map(s => s.trim()).filter(Boolean), skills: []
     } : {
       companyName, description: bio, website, profilePicture
     };
 
     try {
       const res = await fetch(`http://13.60.192.118:3001${endpoint}`, {
-        method: role === 'JOB_SEEKER' && firstName ? 'PUT' : 'POST',
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
@@ -188,17 +188,13 @@ export default function ProfilePage() {
       });
       
       if (res.ok) {
-        window.location.href = '/jobs';
+        if (role === 'EMPLOYER') {
+          window.location.href = '/applications';
+        } else {
+          window.location.href = '/seeker-dashboard';
+        }
       } else {
-        const retryRes = await fetch(`http://13.60.192.118:3001${endpoint}`, {
-          method: role === 'JOB_SEEKER' && firstName ? 'POST' : 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify(payload)
-        });
-        if (retryRes.ok) window.location.href = '/jobs';
+        alert('Failed to save profile. Please check the fields and try again.');
       }
     } catch (err) {
       console.error(err);
@@ -227,7 +223,13 @@ export default function ProfilePage() {
             <button 
               className="btn-primary" 
               style={{ background: 'transparent', border: '1px solid var(--secondary-color)', boxShadow: 'none' }}
-              onClick={() => window.location.href = '/jobs'}
+              onClick={() => {
+                if (role === 'EMPLOYER') {
+                  window.location.href = '/applications';
+                } else {
+                  window.location.href = '/seeker-dashboard';
+                }
+              }}
             >
               Back to Jobs
             </button>

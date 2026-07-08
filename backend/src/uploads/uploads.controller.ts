@@ -37,6 +37,7 @@ export class UploadsController {
           firstName: '', // Dummy defaults, should be updated by the actual profile save route
           lastName: '',
           profilePicture: url,
+          skills: [],
         },
       });
     } else if (req.user.role === 'EMPLOYER') {

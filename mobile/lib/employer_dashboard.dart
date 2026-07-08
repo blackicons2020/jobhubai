@@ -3,6 +3,8 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'profile_screen.dart';
+
 class EmployerDashboard extends StatefulWidget {
   const EmployerDashboard({super.key});
 
@@ -15,6 +17,8 @@ class _EmployerDashboardState extends State<EmployerDashboard> {
   List<dynamic> _jobs = [];
   List<dynamic> _inbox = [];
   bool _isLoading = true;
+  String _companyName = '';
+  String _profilePic = '';
 
   @override
   void initState() {
@@ -30,10 +34,16 @@ class _EmployerDashboardState extends State<EmployerDashboard> {
 
       final jobsRes = await http.get(Uri.parse('http://13.60.192.118:3001/jobs/employer/me'), headers: {'Authorization': 'Bearer $token'});
       final inboxRes = await http.get(Uri.parse('http://13.60.192.118:3001/messages/inbox'), headers: {'Authorization': 'Bearer $token'});
+      final profRes = await http.get(Uri.parse('http://13.60.192.118:3001/profiles/employer'), headers: {'Authorization': 'Bearer $token'});
 
       setState(() {
         if (jobsRes.statusCode == 200) _jobs = jsonDecode(jobsRes.body);
         if (inboxRes.statusCode == 200) _inbox = jsonDecode(inboxRes.body);
+        if (profRes.statusCode == 200) {
+          final prof = jsonDecode(profRes.body);
+          _companyName = prof['companyName'] ?? 'Employer';
+          _profilePic = prof['profilePicture'] ?? '';
+        }
         _isLoading = false;
       });
     } catch (e) {
@@ -46,26 +56,52 @@ class _EmployerDashboardState extends State<EmployerDashboard> {
     return Scaffold(
       backgroundColor: const Color(0xFF120B1C),
       appBar: AppBar(
-        title: const Text('Employer Dashboard'),
+        title: Row(
+          children: [
+            if (_profilePic.isNotEmpty) 
+              CircleAvatar(backgroundImage: NetworkImage(_profilePic), radius: 16)
+            else 
+              const CircleAvatar(child: Icon(Icons.business, size: 16), radius: 16),
+            const SizedBox(width: 8),
+            Expanded(child: Text('Hi, $_companyName', style: const TextStyle(fontSize: 18), overflow: TextOverflow.ellipsis)),
+          ],
+        ),
         backgroundColor: Colors.transparent,
         elevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout, color: Colors.redAccent),
+            onPressed: () async {
+              final prefs = await SharedPreferences.getInstance();
+              await prefs.remove('token');
+              Navigator.pushReplacementNamed(context, '/'); // Simplified route
+            },
+          )
+        ],
       ),
       body: _isLoading ? const Center(child: CircularProgressIndicator()) : IndexedStack(
         index: _currentIndex,
         children: [
-          _buildList(_jobs, 'No jobs posted yet.', isJobs: true),
-          _buildInbox(),
+          _buildList(_jobs, 'No jobs posted yet.', isJobs: true), // My Jobs
+          _buildList([], 'No applications yet.'), // Applications (Placeholder)
+          _buildList([], 'No matches found.'), // Match Candidates (Placeholder)
+          _buildInbox(), // Messages
+          const ProfileScreen(), // Profile
         ],
       ),
       bottomNavigationBar: BottomNavigationBar(
+        type: BottomNavigationBarType.fixed,
         backgroundColor: const Color(0xFF0A0A0A),
         selectedItemColor: const Color(0xFF00F0FF),
         unselectedItemColor: Colors.white54,
         currentIndex: _currentIndex,
         onTap: (index) => setState(() => _currentIndex = index),
         items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.work), label: 'My Jobs'),
+          BottomNavigationBarItem(icon: Icon(Icons.work), label: 'Jobs'),
+          BottomNavigationBarItem(icon: Icon(Icons.assignment), label: 'Apps'),
+          BottomNavigationBarItem(icon: Icon(Icons.people), label: 'Matches'),
           BottomNavigationBarItem(icon: Icon(Icons.message), label: 'Messages'),
+          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
         ],
       ),
     );

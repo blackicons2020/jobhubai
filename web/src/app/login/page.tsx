@@ -40,7 +40,11 @@ export default function LoginPage() {
             ? (profile && profile.companyName && profile.companyName.length > 0)
             : (profile && profile.firstName && profile.firstName.length > 0);
           if (hasProfile) {
-            window.location.href = '/jobs';
+            if (role === 'EMPLOYER') {
+              window.location.href = '/applications';
+            } else {
+              window.location.href = '/seeker-dashboard';
+            }
             return;
           }
         }

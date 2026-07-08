@@ -85,6 +85,11 @@ export class JobsService {
       include: {
         _count: {
           select: { applications: true }
+        },
+        applications: {
+          include: {
+            jobSeekerProfile: true
+          }
         }
       }
     });

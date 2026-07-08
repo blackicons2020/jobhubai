@@ -19,6 +19,8 @@ export default function EmployerDashboard() {
   const [matches, setMatches] = useState<any[]>([]);
   const [matching, setMatching] = useState(false);
 
+  const [selectedViewJobId, setSelectedViewJobId] = useState<string | null>(null);
+
   useEffect(() => {
     const fetchJobs = async () => {
       const token = localStorage.getItem('token');
@@ -130,31 +132,59 @@ export default function EmployerDashboard() {
       </div>
 
       <div style={{ display: 'flex', gap: '1rem', marginBottom: '2rem', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '1rem' }}>
-        <button onClick={() => setActiveTab('JOBS')} style={{ background: 'none', border: 'none', color: activeTab === 'JOBS' ? '#00f0ff' : 'white', fontSize: '1.2rem', cursor: 'pointer', fontWeight: activeTab === 'JOBS' ? 'bold' : 'normal' }}>My Jobs</button>
-        <button onClick={() => setActiveTab('MATCHES')} style={{ background: 'none', border: 'none', color: activeTab === 'MATCHES' ? '#00f0ff' : 'white', fontSize: '1.2rem', cursor: 'pointer', fontWeight: activeTab === 'MATCHES' ? 'bold' : 'normal' }}>Match Candidates</button>
-        <button onClick={() => setActiveTab('MESSAGES')} style={{ background: 'none', border: 'none', color: activeTab === 'MESSAGES' ? '#00f0ff' : 'white', fontSize: '1.2rem', cursor: 'pointer', fontWeight: activeTab === 'MESSAGES' ? 'bold' : 'normal' }}>Messages</button>
+        <button onClick={() => { setActiveTab('JOBS'); setSelectedViewJobId(null); }} style={{ background: 'none', border: 'none', color: activeTab === 'JOBS' ? '#00f0ff' : 'white', fontSize: '1.2rem', cursor: 'pointer', fontWeight: activeTab === 'JOBS' ? 'bold' : 'normal' }}>My Jobs</button>
+        <button onClick={() => { setActiveTab('MATCHES'); setSelectedViewJobId(null); }} style={{ background: 'none', border: 'none', color: activeTab === 'MATCHES' ? '#00f0ff' : 'white', fontSize: '1.2rem', cursor: 'pointer', fontWeight: activeTab === 'MATCHES' ? 'bold' : 'normal' }}>Match Candidates</button>
+        <button onClick={() => { setActiveTab('MESSAGES'); setSelectedViewJobId(null); }} style={{ background: 'none', border: 'none', color: activeTab === 'MESSAGES' ? '#00f0ff' : 'white', fontSize: '1.2rem', cursor: 'pointer', fontWeight: activeTab === 'MESSAGES' ? 'bold' : 'normal' }}>Messages</button>
       </div>
 
       {loading ? <p>Loading...</p> : (
         <>
           {activeTab === 'JOBS' && (
              <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-             {jobs.length === 0 ? <p>You haven't posted any jobs yet.</p> : jobs.map(job => (
-               <div key={job.id} className="glass-panel" style={{ padding: '1.5rem 2rem' }}>
-                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '1rem', marginBottom: '1rem' }}>
-                   <h2 style={{ fontSize: '1.5rem', margin: 0 }}>{job.title}</h2>
-                   <span style={{ background: 'rgba(0, 240, 255, 0.2)', color: '#00f0ff', padding: '4px 12px', borderRadius: '16px', fontSize: '0.9rem', fontWeight: 'bold' }}>
-                     {job._count?.applications || 0} Applications
-                   </span>
-                 </div>
-                 <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                   <button className="btn-primary" style={{ padding: '8px 24px', fontSize: '0.9rem' }} onClick={() => window.alert('Detailed view of applications coming soon!')}>
-                     View Applications
-                   </button>
-                 </div>
+             {selectedViewJobId ? (
+               <div>
+                 <button onClick={() => setSelectedViewJobId(null)} style={{ background: 'none', border: 'none', color: '#00f0ff', cursor: 'pointer', marginBottom: '1rem' }}>&larr; Back to Jobs List</button>
+                 <h2 style={{marginTop:0}}>Applications for {jobs.find(j => j.id === selectedViewJobId)?.title}</h2>
+                 {jobs.find(j => j.id === selectedViewJobId)?.applications?.length === 0 ? (
+                   <p>No applications yet.</p>
+                 ) : (
+                   jobs.find(j => j.id === selectedViewJobId)?.applications?.map((app: any) => (
+                     <div key={app.id} className="glass-panel" style={{ padding: '1.5rem', marginBottom: '1rem' }}>
+                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                         <div>
+                           <h3 style={{ margin: 0 }}>{app.jobSeekerProfile?.firstName} {app.jobSeekerProfile?.lastName}</h3>
+                           <p style={{ margin: '4px 0', color: 'var(--text-secondary)' }}>Status: {app.status}</p>
+                         </div>
+                         <button className="btn-primary" onClick={() => handleInvite(app.jobSeekerProfile.userId)} style={{ padding: '8px 16px', fontSize: '0.9rem' }}>Message</button>
+                       </div>
+                       {app.coverLetter && (
+                         <div style={{ marginTop: '1rem', padding: '1rem', background: 'rgba(0,0,0,0.2)', borderRadius: '8px' }}>
+                           <strong>Cover Letter:</strong>
+                           <p style={{ whiteSpace: 'pre-wrap', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>{app.coverLetter}</p>
+                         </div>
+                       )}
+                     </div>
+                   ))
+                 )}
                </div>
-             ))}
-           </div>
+             ) : (
+               jobs.length === 0 ? <p>You haven't posted any jobs yet.</p> : jobs.map(job => (
+                 <div key={job.id} className="glass-panel" style={{ padding: '1.5rem 2rem' }}>
+                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '1rem', marginBottom: '1rem' }}>
+                     <h2 style={{ fontSize: '1.5rem', margin: 0 }}>{job.title}</h2>
+                     <span style={{ background: 'rgba(0, 240, 255, 0.2)', color: '#00f0ff', padding: '4px 12px', borderRadius: '16px', fontSize: '0.9rem', fontWeight: 'bold' }}>
+                       {job._count?.applications || 0} Applications
+                     </span>
+                   </div>
+                   <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                     <button className="btn-primary" style={{ padding: '8px 24px', fontSize: '0.9rem' }} onClick={() => setSelectedViewJobId(job.id)}>
+                       View Applications
+                     </button>
+                   </div>
+                 </div>
+               ))
+             )}
+            </div>
           )}
 
           {activeTab === 'MATCHES' && (

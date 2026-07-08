@@ -5,6 +5,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'jobs_screen.dart';
 import 'register_screen.dart';
 import 'profile_screen.dart';
+import 'employer_dashboard.dart';
+import 'seeker_dashboard.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -64,10 +66,17 @@ class _LoginScreenState extends State<LoginScreen> {
           }
           
           if (hasProfile) {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (context) => const JobsScreen()),
-            );
+            if (role == 'EMPLOYER') {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => const EmployerDashboard()),
+              );
+            } else {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => const SeekerDashboard()),
+              );
+            }
           } else {
             Navigator.pushReplacement(
               context,

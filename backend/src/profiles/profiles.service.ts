@@ -6,35 +6,14 @@ import { Prisma } from '@prisma/client';
 export class ProfilesService {
   constructor(private prisma: PrismaService) {}
 
-  async createJobSeekerProfile(userId: string, data: Prisma.JobSeekerProfileCreateWithoutUserInput) {
-    const existingProfile = await this.prisma.jobSeekerProfile.findUnique({
+  async upsertJobSeekerProfile(userId: string, data: Prisma.JobSeekerProfileUpdateInput & Prisma.JobSeekerProfileCreateWithoutUserInput) {
+    return this.prisma.jobSeekerProfile.upsert({
       where: { userId },
-    });
-
-    if (existingProfile) {
-      throw new ConflictException('User already has a job seeker profile.');
-    }
-
-    return this.prisma.jobSeekerProfile.create({
-      data: {
+      update: data,
+      create: {
         ...data,
         user: { connect: { id: userId } },
       },
-    });
-  }
-
-  async updateJobSeekerProfile(userId: string, data: Prisma.JobSeekerProfileUpdateInput) {
-    const existingProfile = await this.prisma.jobSeekerProfile.findUnique({
-      where: { userId },
-    });
-
-    if (!existingProfile) {
-      throw new NotFoundException('Job seeker profile not found.');
-    }
-
-    return this.prisma.jobSeekerProfile.update({
-      where: { userId },
-      data,
     });
   }
 
@@ -50,17 +29,11 @@ export class ProfilesService {
     return profile;
   }
 
-  async createEmployerProfile(userId: string, data: Prisma.EmployerCreateWithoutUserInput) {
-    const existingProfile = await this.prisma.employer.findUnique({
+  async upsertEmployerProfile(userId: string, data: Prisma.EmployerUpdateInput & Prisma.EmployerCreateWithoutUserInput) {
+    return this.prisma.employer.upsert({
       where: { userId },
-    });
-
-    if (existingProfile) {
-      throw new ConflictException('User already has an employer profile.');
-    }
-
-    return this.prisma.employer.create({
-      data: {
+      update: data,
+      create: {
         ...data,
         user: { connect: { id: userId } },
       },
