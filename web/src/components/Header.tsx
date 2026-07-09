@@ -48,43 +48,28 @@ export default function Header() {
       borderBottom: '1px solid rgba(255,255,255,0.1)'
     }}>
       {/* Left: Logo and App Name */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flex: 1 }}>
-        <img src="/logo.jpg" alt="JobHub AI Logo" style={{ height: '40px', borderRadius: '8px' }} />
-        <span style={{ fontSize: '1.5rem', fontWeight: 'bold' }} className="text-gradient">JobHub AI</span>
-      </div>
+      <Link href="/" style={{ textDecoration: 'none' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <img src="/logo.jpg" alt="JobHub AI Logo" style={{ height: '40px', borderRadius: '8px' }} />
+          <span style={{ fontSize: '1.5rem', fontWeight: 'bold' }} className="text-gradient">JobHub AI</span>
+        </div>
+      </Link>
 
-      {/* Center: User Profile Info */}
-      <div style={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
-        {user && profile && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            <div style={{ width: 40, height: 40, borderRadius: '50%', overflow: 'hidden', background: 'rgba(255,255,255,0.1)' }}>
-              {profile.profilePicture ? (
-                <img src={profile.profilePicture} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-              ) : (
-                <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>👤</div>
-              )}
-            </div>
-            <div style={{ textAlign: 'left' }}>
-              <h3 style={{ margin: 0, fontSize: '1rem' }}>
-                {user.role === 'JOB_SEEKER' ? `${profile.firstName} ${profile.lastName}` : profile.companyName}
-              </h3>
-              <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.8rem' }}>
-                {user.role === 'JOB_SEEKER' ? (profile.profession || 'Job Seeker') : 'Employer'}
-              </p>
-            </div>
-          </div>
-        )}
-      </div>
+      {/* Center: Empty Space for Layout */}
+      <div style={{ flex: 1 }}></div>
 
-      {/* Right: Auth Buttons */}
-      <div style={{ flex: 1, display: 'flex', justifyContent: 'flex-end' }}>
+      {/* Right: Auth Buttons (Only when NOT logged in) */}
+      <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
         {!user ? (
           <div style={{ display: 'flex', gap: '1rem' }}>
             <Link href="/login" style={{ color: 'white', textDecoration: 'none', padding: '0.5rem 1rem' }}>Log In</Link>
             <Link href="/register" className="btn-primary" style={{ padding: '0.5rem 1rem', textDecoration: 'none' }}>Sign Up</Link>
           </div>
         ) : (
-          <Link href="/" onClick={() => localStorage.removeItem('token')} style={{ color: '#ff4d4d', textDecoration: 'none' }}>Logout</Link>
+          <div style={{ display: 'flex', gap: '1rem' }}>
+            {/* When logged in, we provide a quick link back to dashboard depending on role */}
+            <Link href="/jobs" style={{ color: 'var(--secondary-color)', textDecoration: 'none', padding: '0.5rem 1rem' }}>Dashboard</Link>
+          </div>
         )}
       </div>
     </header>

@@ -13,28 +13,32 @@ export default function SeekerDashboard() {
   const [chatMessages, setChatMessages] = useState<any[]>([]);
   const [newMessage, setNewMessage] = useState('');
 
+  const [profile, setProfile] = useState<any>(null);
+  const [user, setUser] = useState<any>(null);
+
   useEffect(() => {
-    const fetchApplications = async () => {
+    const fetchProfileAndApps = async () => {
       const token = localStorage.getItem('token');
       if (!token) {
         window.location.href = '/login';
         return;
       }
       try {
-        const res = await fetch('http://13.60.192.118:3001/applications/my-applications', {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        if (res.ok) {
-          const data = await res.json();
-          setApplications(data);
-        }
+        const authRes = await fetch('http://13.60.192.118:3001/auth/me', { headers: { 'Authorization': `Bearer ${token}` } });
+        if (authRes.ok) setUser(await authRes.json());
+        
+        const profRes = await fetch('http://13.60.192.118:3001/profiles/job-seeker', { headers: { 'Authorization': `Bearer ${token}` } });
+        if (profRes.ok) setProfile(await profRes.json());
+
+        const appRes = await fetch('http://13.60.192.118:3001/applications/my-applications', { headers: { 'Authorization': `Bearer ${token}` } });
+        if (appRes.ok) setApplications(await appRes.json());
       } catch (err) {
         console.error(err);
       } finally {
         setLoading(false);
       }
     };
-    fetchApplications();
+    fetchProfileAndApps();
   }, []);
 
   useEffect(() => {
@@ -100,6 +104,34 @@ export default function SeekerDashboard() {
 
   return (
     <main style={{ padding: '2rem 4rem', maxWidth: '1200px', margin: '0 auto' }}>
+      
+      {/* Centered Profile Section (Directly under the header) */}
+      {profile && (
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '3rem', textAlign: 'center' }}>
+          <div style={{ width: 80, height: 80, borderRadius: '50%', overflow: 'hidden', background: 'rgba(255,255,255,0.1)', marginBottom: '1rem' }}>
+            {profile.profilePicture ? (
+              <img src={profile.profilePicture} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            ) : (
+              <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2rem' }}>👤</div>
+            )}
+          </div>
+          <h2 style={{ margin: 0, fontSize: '1.8rem' }}>{profile.firstName} {profile.lastName}</h2>
+          <p style={{ margin: '4px 0 1rem 0', color: 'var(--secondary-color)', fontSize: '1.1rem' }}>{profile.profession || 'Job Seeker'}</p>
+          <div style={{ display: 'flex', gap: '1rem' }}>
+            <button 
+              className="btn-primary" 
+              style={{ background: 'transparent', border: '1px solid #ff4d4d', color: '#ff4d4d', boxShadow: 'none' }}
+              onClick={() => {
+                localStorage.removeItem('token');
+                window.location.href = '/login';
+              }}
+            >
+              Logout
+            </button>
+          </div>
+        </div>
+      )}
+
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
         <h1 style={{ fontSize: '2.5rem', margin: 0 }} className="text-gradient">Job Seeker Dashboard</h1>
         <Link href="/jobs">
