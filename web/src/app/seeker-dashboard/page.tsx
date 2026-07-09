@@ -117,18 +117,6 @@ export default function SeekerDashboard() {
           </div>
           <h2 style={{ margin: 0, fontSize: '1.8rem' }}>{profile.firstName} {profile.lastName}</h2>
           <p style={{ margin: '4px 0 1rem 0', color: 'var(--secondary-color)', fontSize: '1.1rem' }}>{profile.profession || 'Job Seeker'}</p>
-          <div style={{ display: 'flex', gap: '1rem' }}>
-            <button 
-              className="btn-primary" 
-              style={{ background: 'transparent', border: '1px solid #ff4d4d', color: '#ff4d4d', boxShadow: 'none' }}
-              onClick={() => {
-                localStorage.removeItem('token');
-                window.location.href = '/login';
-              }}
-            >
-              Logout
-            </button>
-          </div>
         </div>
       )}
 

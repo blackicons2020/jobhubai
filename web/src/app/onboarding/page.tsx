@@ -224,13 +224,14 @@ export default function OnboardingPage() {
       case 4:
         return (
           <div className="fly-in">
-            <h2>Education & Certifications (Optional)</h2>
+            <h2>Education (Optional)</h2>
             <p style={{ color: 'var(--text-secondary)' }}>You can add these now, or click Next to skip this step.</p>
-            <button className="btn-primary" onClick={() => setEducation([...education, { school: '', course: '', yearGraduated: '' }])}>Add Education</button>
+            <button className="btn-primary" onClick={() => setEducation([...education, { school: '', course: '', dates: '', yearGraduated: '' }])}>Add Education</button>
             {education.map((ed, idx) => (
               <div key={idx} style={{ padding: '1rem', background: 'rgba(255,255,255,0.05)', marginTop: '0.5rem', borderRadius: '8px' }}>
-                <input placeholder="Institution" value={ed.school} onChange={e => { const n = [...education]; n[idx].school = e.target.value; setEducation(n); }} className="input-field" />
+                <input placeholder="Institution / School" value={ed.school} onChange={e => { const n = [...education]; n[idx].school = e.target.value; setEducation(n); }} className="input-field" />
                 <input placeholder="Course of Study" value={ed.course} onChange={e => { const n = [...education]; n[idx].course = e.target.value; setEducation(n); }} className="input-field" />
+                <input placeholder="Dates Attended (e.g. 2018 - 2022)" value={ed.dates} onChange={e => { const n = [...education]; n[idx].dates = e.target.value; setEducation(n); }} className="input-field" />
                 <input placeholder="Year Graduated" type="number" value={ed.yearGraduated} onChange={e => { const n = [...education]; n[idx].yearGraduated = e.target.value; setEducation(n); }} className="input-field" />
               </div>
             ))}
@@ -244,14 +245,42 @@ export default function OnboardingPage() {
             <button className="btn-primary" onClick={() => setExperience([...experience, { company: '', role: '', dates: '' }])}>Add Experience</button>
             {experience.map((ex, idx) => (
               <div key={idx} style={{ padding: '1rem', background: 'rgba(255,255,255,0.05)', marginTop: '0.5rem', borderRadius: '8px' }}>
-                <input placeholder="Company" value={ex.company} onChange={e => { const n = [...experience]; n[idx].company = e.target.value; setExperience(n); }} className="input-field" />
+                <input placeholder="Company Worked" value={ex.company} onChange={e => { const n = [...experience]; n[idx].company = e.target.value; setExperience(n); }} className="input-field" />
                 <input placeholder="Role" value={ex.role} onChange={e => { const n = [...experience]; n[idx].role = e.target.value; setExperience(n); }} className="input-field" />
-                <input placeholder="Dates (e.g. 2020-2022)" value={ex.dates} onChange={e => { const n = [...experience]; n[idx].dates = e.target.value; setExperience(n); }} className="input-field" />
+                <input placeholder="Dates (e.g. Jan 2020 - Present)" value={ex.dates} onChange={e => { const n = [...experience]; n[idx].dates = e.target.value; setExperience(n); }} className="input-field" />
               </div>
             ))}
           </div>
         );
       case 6:
+        return (
+          <div className="fly-in">
+            <h2>Certifications & Degrees (Optional)</h2>
+            <p style={{ color: 'var(--text-secondary)' }}>You can add these now, or click Next to skip this step.</p>
+            <button className="btn-primary" onClick={() => setCertificates([...certificates, { name: '', date: '' }])}>Add Certification/Degree</button>
+            {certificates.map((cert, idx) => (
+              <div key={idx} style={{ padding: '1rem', background: 'rgba(255,255,255,0.05)', marginTop: '0.5rem', borderRadius: '8px' }}>
+                <input placeholder="Certification / Degree Name" value={cert.name} onChange={e => { const n = [...certificates]; n[idx].name = e.target.value; setCertificates(n); }} className="input-field" />
+                <input placeholder="Date Obtained (e.g. 2023)" value={cert.date} onChange={e => { const n = [...certificates]; n[idx].date = e.target.value; setCertificates(n); }} className="input-field" />
+              </div>
+            ))}
+          </div>
+        );
+      case 7:
+        return (
+          <div className="fly-in">
+            <h2>Achievements & Awards (Optional)</h2>
+            <p style={{ color: 'var(--text-secondary)' }}>You can add these now, or click Next to skip this step.</p>
+            <button className="btn-primary" onClick={() => setAchievements([...achievements, { title: '', date: '' }])}>Add Achievement/Award</button>
+            {achievements.map((ach, idx) => (
+              <div key={idx} style={{ padding: '1rem', background: 'rgba(255,255,255,0.05)', marginTop: '0.5rem', borderRadius: '8px' }}>
+                <input placeholder="Achievement / Award Title" value={ach.title} onChange={e => { const n = [...achievements]; n[idx].title = e.target.value; setAchievements(n); }} className="input-field" />
+                <input placeholder="Date (e.g. 2022)" value={ach.date} onChange={e => { const n = [...achievements]; n[idx].date = e.target.value; setAchievements(n); }} className="input-field" />
+              </div>
+            ))}
+          </div>
+        );
+      case 8:
         return (
           <div className="fly-in">
             <h2>Profile Picture</h2>
@@ -304,7 +333,7 @@ export default function OnboardingPage() {
     }
   };
 
-  const totalSteps = user?.role === 'JOB_SEEKER' ? 6 : 3;
+  const totalSteps = user?.role === 'JOB_SEEKER' ? 8 : 3;
 
   return (
     <main style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem' }}>

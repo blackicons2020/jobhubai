@@ -24,6 +24,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   final _firstName = TextEditingController();
   final _lastName = TextEditingController();
   final _otherNames = TextEditingController();
+  final _dateOfBirth = TextEditingController();
   String _gender = 'Male';
   final _profession = TextEditingController();
   bool _isSkilledProfessional = false;
@@ -33,6 +34,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   final _residenceCity = TextEditingController();
   final _citizenshipCountry = TextEditingController();
   final _citizenshipState = TextEditingController();
+  
+  // Lists for arrays
+  List<Map<String, String>> _education = [];
+  List<Map<String, String>> _experience = [];
+  List<Map<String, String>> _certificates = [];
+  List<Map<String, String>> _achievements = [];
   
   // Employer State
   final _companyName = TextEditingController();
@@ -78,10 +85,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   Future<void> _pickImage() async {
     final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
     if (image != null) {
-      // In a real app, you would upload this image immediately and get a URL.
-      // For simplicity in this UI iteration, we'll pretend we got a URL or just show the name.
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Image selected for upload')));
-      // _profilePicUrl = ...;
     }
   }
 
@@ -99,6 +103,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         'firstName': _firstName.text,
         'lastName': _lastName.text,
         'otherNames': _otherNames.text,
+        'dateOfBirth': _dateOfBirth.text.isNotEmpty ? '${_dateOfBirth.text}T00:00:00Z' : null,
         'gender': _gender,
         'profession': _profession.text,
         'isSkilledProfessional': _isSkilledProfessional,
@@ -108,6 +113,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         'residenceCity': _residenceCity.text,
         'citizenshipCountry': _citizenshipCountry.text,
         'citizenshipState': _citizenshipState.text,
+        'education': _education,
+        'experience': _experience,
+        'certificates': _certificates,
+        'achievements': _achievements,
         'profilePicture': _profilePicUrl ?? '',
         'skills': [],
       };
@@ -167,6 +176,127 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     );
   }
 
+  void _showAddEducationDialog() {
+    final schoolCtrl = TextEditingController();
+    final courseCtrl = TextEditingController();
+    final datesCtrl = TextEditingController();
+    final yearCtrl = TextEditingController();
+
+    showDialog(context: context, builder: (c) => AlertDialog(
+      backgroundColor: const Color(0xFF1E162B),
+      title: const Text('Add Education', style: TextStyle(color: Colors.white)),
+      content: SingleChildScrollView(
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          _buildTextField(schoolCtrl, 'Institution / School'),
+          _buildTextField(courseCtrl, 'Course of Study'),
+          _buildTextField(datesCtrl, 'Dates Attended'),
+          _buildTextField(yearCtrl, 'Year Graduated'),
+        ]),
+      ),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(c), child: const Text('Cancel')),
+        ElevatedButton(onPressed: () {
+          setState(() {
+            _education.add({
+              'school': schoolCtrl.text,
+              'course': courseCtrl.text,
+              'dates': datesCtrl.text,
+              'yearGraduated': yearCtrl.text,
+            });
+          });
+          Navigator.pop(c);
+        }, child: const Text('Add')),
+      ],
+    ));
+  }
+
+  void _showAddExperienceDialog() {
+    final companyCtrl = TextEditingController();
+    final roleCtrl = TextEditingController();
+    final datesCtrl = TextEditingController();
+
+    showDialog(context: context, builder: (c) => AlertDialog(
+      backgroundColor: const Color(0xFF1E162B),
+      title: const Text('Add Experience', style: TextStyle(color: Colors.white)),
+      content: SingleChildScrollView(
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          _buildTextField(companyCtrl, 'Company Worked'),
+          _buildTextField(roleCtrl, 'Role'),
+          _buildTextField(datesCtrl, 'Dates (e.g. 2020 - 2022)'),
+        ]),
+      ),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(c), child: const Text('Cancel')),
+        ElevatedButton(onPressed: () {
+          setState(() {
+            _experience.add({
+              'company': companyCtrl.text,
+              'role': roleCtrl.text,
+              'dates': datesCtrl.text,
+            });
+          });
+          Navigator.pop(c);
+        }, child: const Text('Add')),
+      ],
+    ));
+  }
+
+  void _showAddCertDialog() {
+    final nameCtrl = TextEditingController();
+    final dateCtrl = TextEditingController();
+
+    showDialog(context: context, builder: (c) => AlertDialog(
+      backgroundColor: const Color(0xFF1E162B),
+      title: const Text('Add Certification', style: TextStyle(color: Colors.white)),
+      content: SingleChildScrollView(
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          _buildTextField(nameCtrl, 'Certification / Degree Name'),
+          _buildTextField(dateCtrl, 'Date Obtained'),
+        ]),
+      ),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(c), child: const Text('Cancel')),
+        ElevatedButton(onPressed: () {
+          setState(() {
+            _certificates.add({
+              'name': nameCtrl.text,
+              'date': dateCtrl.text,
+            });
+          });
+          Navigator.pop(c);
+        }, child: const Text('Add')),
+      ],
+    ));
+  }
+
+  void _showAddAchievementDialog() {
+    final titleCtrl = TextEditingController();
+    final dateCtrl = TextEditingController();
+
+    showDialog(context: context, builder: (c) => AlertDialog(
+      backgroundColor: const Color(0xFF1E162B),
+      title: const Text('Add Achievement', style: TextStyle(color: Colors.white)),
+      content: SingleChildScrollView(
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          _buildTextField(titleCtrl, 'Achievement / Award Title'),
+          _buildTextField(dateCtrl, 'Date'),
+        ]),
+      ),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(c), child: const Text('Cancel')),
+        ElevatedButton(onPressed: () {
+          setState(() {
+            _achievements.add({
+              'title': titleCtrl.text,
+              'date': dateCtrl.text,
+            });
+          });
+          Navigator.pop(c);
+        }, child: const Text('Add')),
+      ],
+    ));
+  }
+
   Widget _buildSeekerSteps() {
     switch (_currentStep) {
       case 1:
@@ -177,19 +307,37 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             _buildTextField(_firstName, 'First Name'),
             _buildTextField(_lastName, 'Last Name'),
             _buildTextField(_otherNames, 'Other Names (Optional)'),
+            _buildTextField(_dateOfBirth, 'Date of Birth (YYYY-MM-DD)'),
+            Padding(
+              padding: const EdgeInsets.only(bottom: 16.0),
+              child: DropdownButtonFormField<String>(
+                value: _gender,
+                dropdownColor: const Color(0xFF1E162B),
+                style: const TextStyle(color: Colors.white),
+                decoration: InputDecoration(
+                  labelText: 'Gender',
+                  labelStyle: TextStyle(color: Colors.white.withOpacity(0.5)),
+                  filled: true,
+                  fillColor: Colors.white.withOpacity(0.05),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.white.withOpacity(0.1))),
+                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.white.withOpacity(0.1))),
+                ),
+                items: ['Male', 'Female', 'Other'].map((String value) {
+                  return DropdownMenuItem<String>(
+                    value: value,
+                    child: Text(value),
+                  );
+                }).toList(),
+                onChanged: (newValue) {
+                  setState(() {
+                    if (newValue != null) _gender = newValue;
+                  });
+                },
+              ),
+            ),
           ],
         );
       case 2:
-        return Column(
-          children: [
-            const Text('Location', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)),
-            const SizedBox(height: 24),
-            _buildTextField(_residenceCity, 'City'),
-            _buildTextField(_residenceState, 'State'),
-            _buildTextField(_residenceCountry, 'Country'),
-          ],
-        );
-      case 3:
         return Column(
           children: [
             const Text('Professional Details', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)),
@@ -198,13 +346,93 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             Row(
               children: [
                 Checkbox(value: _isSkilledProfessional, onChanged: (v) => setState(() => _isSkilledProfessional = v ?? false)),
-                const Expanded(child: Text('I am a skilled/trade professional', style: TextStyle(color: Colors.white))),
+                const Expanded(child: Text('I am a skilled/trade professional (e.g. Baker, Fashion Designer)', style: TextStyle(color: Colors.white))),
               ],
             ),
-            if (_isSkilledProfessional) _buildTextField(_skilledProfession, 'Specify Skill (e.g. Baker)'),
+            if (_isSkilledProfessional) _buildTextField(_skilledProfession, 'Specify Skill/Trade'),
+          ],
+        );
+      case 3:
+        return Column(
+          children: [
+            const Text('Location & Citizenship', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)),
+            const SizedBox(height: 24),
+            _buildTextField(_residenceCity, 'Residence City / Town'),
+            _buildTextField(_residenceState, 'Residence State'),
+            _buildTextField(_residenceCountry, 'Residence Country'),
+            _buildTextField(_citizenshipCountry, 'Citizenship Country'),
+            _buildTextField(_citizenshipState, 'Citizenship State (Optional)'),
           ],
         );
       case 4:
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const Text('Education', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)),
+            const SizedBox(height: 16),
+            ..._education.map((e) => Card(
+              color: Colors.white.withOpacity(0.05),
+              child: ListTile(
+                title: Text('${e['school']} (${e['course']})', style: const TextStyle(color: Colors.white)),
+                subtitle: Text('Attended: ${e['dates']}, Graduated: ${e['yearGraduated']}', style: const TextStyle(color: Colors.white70)),
+                trailing: IconButton(icon: const Icon(Icons.delete, color: Colors.red), onPressed: () => setState(() => _education.remove(e))),
+              ),
+            )),
+            ElevatedButton(onPressed: _showAddEducationDialog, child: const Text('Add Education')),
+          ],
+        );
+      case 5:
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const Text('Professional Experience', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)),
+            const SizedBox(height: 16),
+            ..._experience.map((e) => Card(
+              color: Colors.white.withOpacity(0.05),
+              child: ListTile(
+                title: Text('${e['role']} at ${e['company']}', style: const TextStyle(color: Colors.white)),
+                subtitle: Text('Dates: ${e['dates']}', style: const TextStyle(color: Colors.white70)),
+                trailing: IconButton(icon: const Icon(Icons.delete, color: Colors.red), onPressed: () => setState(() => _experience.remove(e))),
+              ),
+            )),
+            ElevatedButton(onPressed: _showAddExperienceDialog, child: const Text('Add Experience')),
+          ],
+        );
+      case 6:
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const Text('Certifications & Degrees', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)),
+            const SizedBox(height: 16),
+            ..._certificates.map((e) => Card(
+              color: Colors.white.withOpacity(0.05),
+              child: ListTile(
+                title: Text('${e['name']}', style: const TextStyle(color: Colors.white)),
+                subtitle: Text('Date: ${e['date']}', style: const TextStyle(color: Colors.white70)),
+                trailing: IconButton(icon: const Icon(Icons.delete, color: Colors.red), onPressed: () => setState(() => _certificates.remove(e))),
+              ),
+            )),
+            ElevatedButton(onPressed: _showAddCertDialog, child: const Text('Add Certification')),
+          ],
+        );
+      case 7:
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const Text('Achievements & Awards', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)),
+            const SizedBox(height: 16),
+            ..._achievements.map((e) => Card(
+              color: Colors.white.withOpacity(0.05),
+              child: ListTile(
+                title: Text('${e['title']}', style: const TextStyle(color: Colors.white)),
+                subtitle: Text('Date: ${e['date']}', style: const TextStyle(color: Colors.white70)),
+                trailing: IconButton(icon: const Icon(Icons.delete, color: Colors.red), onPressed: () => setState(() => _achievements.remove(e))),
+              ),
+            )),
+            ElevatedButton(onPressed: _showAddAchievementDialog, child: const Text('Add Achievement')),
+          ],
+        );
+      case 8:
         return Column(
           children: [
             const Text('Profile Picture', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)),
@@ -234,7 +462,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             const Text('Company Details', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)),
             const SizedBox(height: 24),
             _buildTextField(_companyName, 'Company Name'),
-            _buildTextField(_description, 'Description'),
+            _buildTextField(_description, 'Description (What they do)'),
           ],
         );
       case 2:
@@ -242,7 +470,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           children: [
             const Text('Location', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)),
             const SizedBox(height: 24),
-            _buildTextField(_locationCity, 'City'),
+            _buildTextField(_locationCity, 'City / Town'),
+            _buildTextField(_locationState, 'State'),
             _buildTextField(_locationCountry, 'Country'),
           ],
         );
@@ -274,7 +503,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       return const Scaffold(backgroundColor: Color(0xFF120B1C), body: Center(child: CircularProgressIndicator()));
     }
 
-    int maxSteps = _user!['role'] == 'JOB_SEEKER' ? 4 : 3;
+    int maxSteps = _user!['role'] == 'JOB_SEEKER' ? 8 : 3;
 
     return Scaffold(
       backgroundColor: const Color(0xFF120B1C),

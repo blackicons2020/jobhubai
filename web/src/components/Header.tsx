@@ -69,6 +69,15 @@ export default function Header() {
           <div style={{ display: 'flex', gap: '1rem' }}>
             {/* When logged in, we provide a quick link back to dashboard depending on role */}
             <Link href="/jobs" style={{ color: 'var(--secondary-color)', textDecoration: 'none', padding: '0.5rem 1rem' }}>Dashboard</Link>
+            <button 
+              style={{ color: '#ff4d4d', textDecoration: 'none', background: 'transparent', border: 'none', cursor: 'pointer', padding: '0.5rem 1rem', fontSize: '1rem' }}
+              onClick={() => {
+                localStorage.removeItem('token');
+                window.location.href = '/login';
+              }}
+            >
+              Logout
+            </button>
           </div>
         )}
       </div>
