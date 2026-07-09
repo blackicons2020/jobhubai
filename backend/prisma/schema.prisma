@@ -40,6 +40,22 @@ model JobSeekerProfile {
   user             User     @relation(fields: [userId], references: [id])
   firstName        String
   lastName         String
+  otherNames       String?
+  gender           String?
+  profession       String?
+  isSkilledProfessional Boolean @default(false)
+  skilledProfession String?
+  residenceCountry String?
+  residenceState   String?
+  residenceCity    String?
+  citizenshipCountry String?
+  citizenshipState String?
+  dateOfBirth      DateTime?
+  education        Json?
+  certificates     Json?
+  professionalCertifications Json?
+  experience       Json?
+  achievements     Json?
   bio              String?
   resumeUrl        String?
   resumeContent    String?
@@ -59,6 +75,9 @@ model Employer {
   user           User     @relation(fields: [userId], references: [id])
   companyName    String
   description    String?
+  locationCountry String?
+  locationState  String?
+  locationCity   String?
   website        String?
   profilePicture String?
   createdAt      DateTime @default(now())

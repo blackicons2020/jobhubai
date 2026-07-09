@@ -49,10 +49,10 @@ export default function LoginPage() {
           }
         }
       } catch (profileErr) {
-        // If profile check fails, send to profile page to be safe
+        // If profile check fails, send to onboarding page to be safe
       }
       // No profile found or check failed — send to complete profile
-      window.location.href = '/profile';
+      window.location.href = '/onboarding';
     } catch (err: any) {
       setError(err.message);
     } finally {

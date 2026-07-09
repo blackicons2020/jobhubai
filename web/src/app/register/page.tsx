@@ -25,21 +25,8 @@ export default function RegisterPage() {
         throw new Error('Registration failed. Please try again.');
       }
 
-      // Automatically login
-      const loginRes = await fetch('http://13.60.192.118:3001/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
-      });
-
-      if (loginRes.ok) {
-        const data = await loginRes.json();
-        localStorage.setItem('token', data.access_token);
-        // New users have incomplete profiles
-        window.location.href = '/profile';
-      } else {
-        window.location.href = '/login';
-      }
+      // Redirect to login page for sign in
+      window.location.href = '/login';
     } catch (err: any) {
       setError(err.message);
     } finally {

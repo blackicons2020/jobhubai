@@ -60,34 +60,6 @@ class _SeekerDashboardState extends State<SeekerDashboard> {
 
     return Scaffold(
       backgroundColor: const Color(0xFF120B1C),
-      appBar: AppBar(
-        title: Row(
-          children: [
-            if (_profilePic.isNotEmpty) 
-              CircleAvatar(backgroundImage: NetworkImage(_profilePic), radius: 16)
-            else 
-              const CircleAvatar(child: Icon(Icons.person, size: 16), radius: 16),
-            const SizedBox(width: 8),
-            Text('Hi, $_firstName', style: const TextStyle(fontSize: 18)),
-          ],
-        ),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout, color: Colors.redAccent),
-            onPressed: () async {
-              final prefs = await SharedPreferences.getInstance();
-              await prefs.remove('token');
-              if (!context.mounted) return;
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (context) => const LoginScreen()),
-              );
-            },
-          )
-        ],
-      ),
       body: _isLoading ? const Center(child: CircularProgressIndicator()) : IndexedStack(
         index: _currentIndex,
         children: [

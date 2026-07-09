@@ -56,34 +56,6 @@ class _EmployerDashboardState extends State<EmployerDashboard> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFF120B1C),
-      appBar: AppBar(
-        title: Row(
-          children: [
-            if (_profilePic.isNotEmpty) 
-              CircleAvatar(backgroundImage: NetworkImage(_profilePic), radius: 16)
-            else 
-              const CircleAvatar(child: Icon(Icons.business, size: 16), radius: 16),
-            const SizedBox(width: 8),
-            Expanded(child: Text('Hi, $_companyName', style: const TextStyle(fontSize: 18), overflow: TextOverflow.ellipsis)),
-          ],
-        ),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout, color: Colors.redAccent),
-            onPressed: () async {
-              final prefs = await SharedPreferences.getInstance();
-              await prefs.remove('token');
-              if (!context.mounted) return;
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (context) => const LoginScreen()),
-              );
-            },
-          )
-        ],
-      ),
       body: _isLoading ? const Center(child: CircularProgressIndicator()) : IndexedStack(
         index: _currentIndex,
         children: [

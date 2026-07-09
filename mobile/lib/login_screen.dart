@@ -4,7 +4,7 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'jobs_screen.dart';
 import 'register_screen.dart';
-import 'profile_screen.dart';
+import 'onboarding_screen.dart';
 import 'employer_dashboard.dart';
 import 'seeker_dashboard.dart';
 
@@ -62,7 +62,7 @@ class _LoginScreenState extends State<LoginScreen> {
               }
             }
           } catch (_) {
-            // Profile check failed, send to profile to be safe
+            // Profile check failed, send to onboarding to be safe
           }
           
           if (hasProfile) {
@@ -80,7 +80,7 @@ class _LoginScreenState extends State<LoginScreen> {
           } else {
             Navigator.pushReplacement(
               context,
-              MaterialPageRoute(builder: (context) => const ProfileScreen()),
+              MaterialPageRoute(builder: (context) => const OnboardingScreen()),
             );
           }
         }
