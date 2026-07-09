@@ -72,6 +72,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final location = '${_profile?['residenceCity'] ?? ''} ${_profile?['residenceCountry'] ?? ''}'.trim();
     final profession = _profile?['profession'] ?? 'Job Seeker';
     final picUrl = _profile?['profilePicture'];
+    final isSkilled = _profile?['isSkilledProfessional'] == true;
+    
+    final education = _profile?['education'] as List<dynamic>? ?? [];
+    final experience = _profile?['experience'] as List<dynamic>? ?? [];
+    final certificates = _profile?['certificates'] as List<dynamic>? ?? [];
+    final achievements = _profile?['achievements'] as List<dynamic>? ?? [];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -89,6 +95,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
         Text(profession, style: const TextStyle(fontSize: 18, color: Color(0xFF00F0FF)), textAlign: TextAlign.center),
         if (location.isNotEmpty)
           Text(location, style: TextStyle(fontSize: 14, color: Colors.white.withOpacity(0.7)), textAlign: TextAlign.center),
+        if (isSkilled)
+          Text('Skilled Professional: ${_profile?['skilledProfession'] ?? 'Yes'}', style: const TextStyle(fontSize: 14, color: Colors.orangeAccent), textAlign: TextAlign.center),
         
         const SizedBox(height: 32),
         ElevatedButton.icon(
@@ -107,8 +115,52 @@ class _ProfileScreenState extends State<ProfileScreen> {
         const SizedBox(height: 32),
         _buildSectionTitle('Personal Details'),
         _buildInfoRow('Gender', _profile?['gender'] ?? 'Not specified'),
+        if (_profile?['dateOfBirth'] != null)
+          _buildInfoRow('Date of Birth', (_profile?['dateOfBirth'] as String).split('T')[0]),
         _buildInfoRow('Citizenship', _profile?['citizenshipCountry'] ?? 'Not specified'),
+
+        if (education.isNotEmpty) ...[
+          const SizedBox(height: 24),
+          _buildSectionTitle('Education'),
+          ...education.map((e) => _buildCardItem(e['school'], e['course'], 'Dates: ${e['dates']} • Grad: ${e['yearGraduated']}')),
+        ],
+
+        if (experience.isNotEmpty) ...[
+          const SizedBox(height: 24),
+          _buildSectionTitle('Experience'),
+          ...experience.map((e) => _buildCardItem(e['company'], e['role'], 'Dates: ${e['dates']}')),
+        ],
+
+        if (certificates.isNotEmpty) ...[
+          const SizedBox(height: 24),
+          _buildSectionTitle('Certifications'),
+          ...certificates.map((e) => _buildCardItem(e['name'], null, 'Date: ${e['date']}')),
+        ],
+
+        if (achievements.isNotEmpty) ...[
+          const SizedBox(height: 24),
+          _buildSectionTitle('Achievements & Awards'),
+          ...achievements.map((e) => _buildCardItem(e['title'], null, 'Date: ${e['date']}')),
+        ],
       ],
+    );
+  }
+
+  Widget _buildCardItem(String? title, String? subtitle1, String? subtitle2) {
+    return Card(
+      color: Colors.white.withOpacity(0.05),
+      margin: const EdgeInsets.only(bottom: 8.0),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (title != null) Text(title, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+            if (subtitle1 != null) ...[const SizedBox(height: 4), Text(subtitle1, style: const TextStyle(color: Colors.white, fontSize: 14))],
+            if (subtitle2 != null) ...[const SizedBox(height: 4), Text(subtitle2, style: const TextStyle(color: Colors.white70, fontSize: 14))],
+          ],
+        ),
+      ),
     );
   }
 
