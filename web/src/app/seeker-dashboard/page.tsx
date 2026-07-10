@@ -124,7 +124,14 @@ export default function SeekerDashboard() {
       });
       const sEst = await sRes.json();
 
-      setAiInsights({ suggestions: cSuggs.suggestions || [], salary: sEst });
+      const scoreRes = await fetch('http://13.60.192.118:3001/ai/profile/score', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify(profile)
+      });
+      const scoreData = await scoreRes.json();
+
+      setAiInsights({ suggestions: cSuggs.suggestions || [], salary: sEst, score: scoreData });
     } catch (err) {
       console.error(err);
     } finally {
@@ -156,10 +163,28 @@ export default function SeekerDashboard() {
             <div className="glass-panel" style={{ marginTop: '2rem', padding: '1.5rem', textAlign: 'left', width: '100%', maxWidth: '600px', borderLeft: '4px solid #00f0ff' }}>
               <h3 style={{ marginTop: 0, color: '#00f0ff', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>✨ AI Career Insights</h3>
               
-              <div style={{ marginBottom: '1.5rem' }}>
-                <h4 style={{ margin: '0 0 0.5rem 0' }}>Estimated Market Salary</h4>
-                <p style={{ margin: 0, fontSize: '1.5rem', fontWeight: 'bold' }}>{aiInsights.salary?.currency} {aiInsights.salary?.min?.toLocaleString()} - {aiInsights.salary?.max?.toLocaleString()}</p>
-                <p style={{ margin: '0.25rem 0 0 0', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>{aiInsights.salary?.reasoning}</p>
+              <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap', marginBottom: '1.5rem' }}>
+                <div style={{ flex: 1, minWidth: '200px' }}>
+                  <h4 style={{ margin: '0 0 0.5rem 0' }}>Estimated Market Salary</h4>
+                  <p style={{ margin: 0, fontSize: '1.5rem', fontWeight: 'bold' }}>{aiInsights.salary?.currency} {aiInsights.salary?.min?.toLocaleString()} - {aiInsights.salary?.max?.toLocaleString()}</p>
+                  <p style={{ margin: '0.25rem 0 0 0', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>{aiInsights.salary?.reasoning}</p>
+                </div>
+                
+                {aiInsights.score && (
+                  <div style={{ flex: 1, minWidth: '250px', background: 'rgba(255,255,255,0.05)', padding: '1rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                      <h4 style={{ margin: 0 }}>Resume Score</h4>
+                      <span style={{ fontSize: '1.2rem', fontWeight: 'bold', color: aiInsights.score.score > 80 ? '#00ff00' : '#ff8c00' }}>
+                        {aiInsights.score.score}/100
+                      </span>
+                    </div>
+                    <ul style={{ margin: 0, paddingLeft: '1.2rem', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
+                      {aiInsights.score.suggestions?.map((s: string, idx: number) => (
+                        <li key={idx} style={{ marginBottom: '4px' }}>{s}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
               </div>
 
               <div>

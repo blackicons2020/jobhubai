@@ -115,7 +115,7 @@ export default function ProfilePage() {
                 Edit Profile
               </Link>
               {user.role === 'JOB_SEEKER' && (
-                <button className="btn-primary" style={{ padding: '0.5rem 1rem' }}>Download CV</button>
+                <button className="btn-primary" style={{ padding: '0.5rem 1rem' }} onClick={() => window.print()}>Export PDF CV</button>
               )}
             </div>
           </div>

@@ -11,6 +11,42 @@ export default function CreateJobPage() {
   const [isRemote, setIsRemote] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [generatingAi, setGeneratingAi] = useState(false);
+
+  const handleGenerateAiDescription = async () => {
+    if (!title) {
+      setError('Please enter a Job Title first to generate a description.');
+      return;
+    }
+    setGeneratingAi(true);
+    setError('');
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch('http://13.60.192.118:3001/ai/job-description/generate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          title,
+          location,
+          isRemote,
+          salary
+        }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setDescription(data.description);
+      } else {
+        setError('Failed to generate description.');
+      }
+    } catch (err: any) {
+      setError('Failed to generate description.');
+    } finally {
+      setGeneratingAi(false);
+    }
+  };
 
   const handleCreateJob = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -81,7 +117,17 @@ export default function CreateJobPage() {
           </div>
 
           <div>
-            <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>Job Description</label>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+              <label style={{ display: 'block', color: 'var(--text-secondary)' }}>Job Description</label>
+              <button 
+                type="button" 
+                onClick={handleGenerateAiDescription} 
+                disabled={generatingAi}
+                style={{ background: 'transparent', border: '1px solid #00f0ff', color: '#00f0ff', padding: '4px 12px', borderRadius: '12px', cursor: 'pointer', fontSize: '0.9rem' }}
+              >
+                {generatingAi ? 'Generating...' : '✨ Generate with AI'}
+              </button>
+            </div>
             <textarea 
               value={description}
               onChange={(e) => setDescription(e.target.value)}

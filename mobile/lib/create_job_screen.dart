@@ -17,7 +17,62 @@ class _CreateJobScreenState extends State<CreateJobScreen> {
   final _salaryController = TextEditingController();
   bool _isRemote = false;
   bool _isLoading = false;
+  bool _isGeneratingAi = false;
   String? _errorMessage;
+
+  Future<void> _generateAiDescription() async {
+    if (_titleController.text.isEmpty) {
+      setState(() {
+        _errorMessage = 'Please enter a Job Title first to generate a description.';
+      });
+      return;
+    }
+
+    setState(() {
+      _isGeneratingAi = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token');
+
+      final response = await http.post(
+        Uri.parse('http://13.60.192.118:3001/ai/job-description/generate'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({
+          'title': _titleController.text,
+          'location': _locationController.text,
+          'salary': _salaryController.text,
+          'isRemote': _isRemote,
+        }),
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final data = jsonDecode(response.body);
+        setState(() {
+          _descriptionController.text = data['description'] ?? '';
+        });
+      } else {
+        setState(() {
+          _errorMessage = 'Failed to generate description with AI.';
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _errorMessage = 'Connection error. Please try again.';
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isGeneratingAi = false;
+        });
+      }
+    }
+  }
 
   Future<void> _createJob() async {
     setState(() {
@@ -128,13 +183,28 @@ class _CreateJobScreenState extends State<CreateJobScreen> {
                 ),
                 const SizedBox(height: 16),
                 
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('Job Description', style: TextStyle(color: Colors.white.withOpacity(0.5))),
+                    TextButton.icon(
+                      onPressed: _isGeneratingAi ? null : _generateAiDescription,
+                      icon: const Icon(Icons.auto_awesome, size: 16),
+                      label: Text(_isGeneratingAi ? 'Generating...' : 'Generate with AI'),
+                      style: TextButton.styleFrom(
+                        foregroundColor: Colors.indigoAccent,
+                        padding: EdgeInsets.zero,
+                      ),
+                    ),
+                  ],
+                ),
                 TextField(
                   controller: _descriptionController,
                   style: const TextStyle(color: Colors.white),
                   maxLines: 5,
                   decoration: InputDecoration(
-                    labelText: 'Job Description',
-                    labelStyle: TextStyle(color: Colors.white.withOpacity(0.5)),
+                    hintText: 'Enter Job Description...',
+                    hintStyle: TextStyle(color: Colors.white.withOpacity(0.3)),
                     filled: true,
                     fillColor: Colors.white.withOpacity(0.05),
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),

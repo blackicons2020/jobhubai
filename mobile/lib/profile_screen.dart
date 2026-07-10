@@ -17,6 +17,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Map<String, dynamic>? _user;
   Map<String, dynamic>? _profile;
   int _completion = 0;
+  
+  bool _isAiLoading = false;
+  Map<String, dynamic>? _aiScore;
+  Map<String, dynamic>? _aiSalary;
+  List<dynamic>? _aiSuggestions;
 
   @override
   void initState() {
@@ -69,6 +74,51 @@ class _ProfileScreenState extends State<ProfileScreen> {
       debugPrint(e.toString());
     } finally {
       setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _generateAiInsights() async {
+    if (_profile == null) return;
+    setState(() => _isAiLoading = true);
+    
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token');
+      
+      // Fetch Score
+      final scoreRes = await http.post(
+        Uri.parse('http://13.60.192.118:3001/ai/profile/score'),
+        headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer $token'},
+        body: jsonEncode(_profile),
+      );
+      
+      // Fetch Salary
+      final salaryRes = await http.post(
+        Uri.parse('http://13.60.192.118:3001/ai/salary/estimate'),
+        headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer $token'},
+        body: jsonEncode({
+          'job_title': _profile?['profession'] ?? 'Job Seeker',
+          'location': _profile?['residenceCity'] ?? 'Unknown',
+          'experience_years': 3,
+        }),
+      );
+      
+      // Fetch Suggestions
+      final suggsRes = await http.post(
+        Uri.parse('http://13.60.192.118:3001/ai/career/suggestions'),
+        headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer $token'},
+        body: jsonEncode(_profile),
+      );
+
+      setState(() {
+        if (scoreRes.statusCode == 200) _aiScore = jsonDecode(scoreRes.body);
+        if (salaryRes.statusCode == 200) _aiSalary = jsonDecode(salaryRes.body);
+        if (suggsRes.statusCode == 200) _aiSuggestions = jsonDecode(suggsRes.body)['suggestions'];
+      });
+    } catch (e) {
+      debugPrint(e.toString());
+    } finally {
+      setState(() => _isAiLoading = false);
     }
   }
 
@@ -165,6 +215,89 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ],
         ),
         
+        const SizedBox(height: 32),
+        ElevatedButton.icon(
+          onPressed: _isAiLoading ? null : _generateAiInsights,
+          icon: const Icon(Icons.auto_awesome, color: Colors.white),
+          label: Text(_isAiLoading ? 'Generating AI Insights...' : 'Generate AI Career Insights', style: const TextStyle(color: Colors.white)),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.indigoAccent,
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+        ),
+
+        if (_aiScore != null || _aiSalary != null) ...[
+          const SizedBox(height: 24),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.05),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: const Color(0xFF00F0FF).withOpacity(0.5)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Icon(Icons.auto_awesome, color: Color(0xFF00F0FF), size: 20),
+                    const SizedBox(width: 8),
+                    const Text('AI Career Insights', style: TextStyle(color: Color(0xFF00F0FF), fontSize: 18, fontWeight: FontWeight.bold)),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                
+                if (_aiSalary != null) ...[
+                  const Text('Estimated Market Salary', style: TextStyle(color: Colors.white70, fontSize: 14)),
+                  const SizedBox(height: 4),
+                  Text('${_aiSalary!['currency']} ${_aiSalary!['min']} - ${_aiSalary!['max']}', style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 4),
+                  Text(_aiSalary!['reasoning'] ?? '', style: const TextStyle(color: Colors.white54, fontSize: 12)),
+                  const SizedBox(height: 16),
+                ],
+
+                if (_aiScore != null) ...[
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text('Resume Score', style: TextStyle(color: Colors.white70, fontSize: 14)),
+                      Text('${_aiScore!['score']}/100', style: TextStyle(color: _aiScore!['score'] > 80 ? Colors.greenAccent : Colors.orangeAccent, fontSize: 18, fontWeight: FontWeight.bold)),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  if (_aiScore!['suggestions'] != null)
+                    ...(_aiScore!['suggestions'] as List<dynamic>).map((s) => Padding(
+                      padding: const EdgeInsets.only(bottom: 4.0),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('• ', style: TextStyle(color: Colors.white54)),
+                          Expanded(child: Text(s.toString(), style: const TextStyle(color: Colors.white54, fontSize: 12))),
+                        ],
+                      ),
+                    )),
+                  const SizedBox(height: 16),
+                ],
+
+                if (_aiSuggestions != null) ...[
+                  const Text('Career Path Suggestions', style: TextStyle(color: Colors.white70, fontSize: 14)),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: _aiSuggestions!.map((s) => Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(color: Colors.white.withOpacity(0.1), borderRadius: BorderRadius.circular(16)),
+                      child: Text(s.toString(), style: const TextStyle(color: Colors.white, fontSize: 12)),
+                    )).toList(),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
+
         if (_profile?['summary'] != null && _profile!['summary'].toString().isNotEmpty) ...[
           const SizedBox(height: 32),
           _buildSectionTitle('About Me'),

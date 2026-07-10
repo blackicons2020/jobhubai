@@ -11,6 +11,7 @@ export default function JobsFeedPage() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [generatingCoverLetter, setGeneratingCoverLetter] = useState(false);
+  const [matchScores, setMatchScores] = useState<Record<string, {score?: number, loading: boolean}>>({});
 
   const [role, setRole] = useState<'JOB_SEEKER' | 'EMPLOYER' | null>(null);
   const [subscriptionTier, setSubscriptionTier] = useState<'FREE' | 'PREMIUM'>('FREE');
@@ -156,6 +157,39 @@ export default function JobsFeedPage() {
     }
   };
 
+  const calculateMatchScore = async (job: any) => {
+    setMatchScores(prev => ({ ...prev, [job.id]: { loading: true } }));
+    try {
+      const token = localStorage.getItem('token');
+      const profileRes = await fetch('http://13.60.192.118:3001/profiles/job-seeker', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const profileData = await profileRes.json();
+      const profileText = JSON.stringify(profileData);
+
+      const res = await fetch('http://13.60.192.118:3001/ai/match/score', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          profile_text: profileText,
+          job_description_text: job.description || job.title
+        }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setMatchScores(prev => ({ ...prev, [job.id]: { loading: false, score: data.match_score } }));
+      } else {
+        setMatchScores(prev => ({ ...prev, [job.id]: { loading: false } }));
+      }
+    } catch (err) {
+      setMatchScores(prev => ({ ...prev, [job.id]: { loading: false } }));
+    }
+  };
+
   const filteredJobs = jobs.filter(j => 
     j.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
     (j.employer?.companyName || '').toLowerCase().includes(searchQuery.toLowerCase())
@@ -248,15 +282,32 @@ export default function JobsFeedPage() {
                     <span>💰 {job.salary || 'Competitive'}</span>
                   </div>
                 </div>
-                {role === 'JOB_SEEKER' && (
-                  <button 
-                    className="btn-primary" 
-                    style={{ padding: '8px 24px' }}
-                    onClick={() => setApplyingJobId(applyingJobId === job.id ? null : job.id)}
-                  >
-                    {applyingJobId === job.id ? 'Cancel' : 'Apply Now'}
-                  </button>
-                )}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                  {role === 'JOB_SEEKER' && (
+                    <>
+                      {matchScores[job.id]?.score !== undefined ? (
+                        <div style={{ background: 'rgba(0, 240, 255, 0.1)', padding: '6px 12px', borderRadius: '12px', color: '#00f0ff', fontWeight: 'bold' }}>
+                          {matchScores[job.id]!.score!}% Match
+                        </div>
+                      ) : (
+                        <button 
+                          onClick={() => calculateMatchScore(job)}
+                          disabled={matchScores[job.id]?.loading}
+                          style={{ background: 'transparent', border: '1px solid var(--secondary-color)', color: 'var(--text-secondary)', padding: '6px 12px', borderRadius: '12px', cursor: 'pointer', fontSize: '0.9rem' }}
+                        >
+                          {matchScores[job.id]?.loading ? 'Calculating...' : 'Predict Match Score'}
+                        </button>
+                      )}
+                      <button 
+                        className="btn-primary" 
+                        style={{ padding: '8px 24px' }}
+                        onClick={() => setApplyingJobId(applyingJobId === job.id ? null : job.id)}
+                      >
+                        {applyingJobId === job.id ? 'Cancel' : 'Apply Now'}
+                      </button>
+                    </>
+                  )}
+                </div>
               </div>
 
               {/* Optional Cover Letter Section */}

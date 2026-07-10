@@ -21,6 +21,7 @@ class _JobsScreenState extends State<JobsScreen> {
   String? _applyingJobId;
   final _coverLetterController = TextEditingController();
   bool _isGeneratingCoverLetter = false;
+  final Map<String, dynamic> _matchScores = {};
 
   @override
   void initState() {
@@ -145,6 +146,55 @@ class _JobsScreenState extends State<JobsScreen> {
           _isGeneratingCoverLetter = false;
         });
       }
+    }
+  }
+
+  Future<void> _calculateMatchScore(dynamic job) async {
+    final jobId = job['id']?.toString();
+    if (jobId == null) return;
+
+    setState(() {
+      _matchScores[jobId] = {'loading': true};
+    });
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token');
+
+      // Fetch user profile first
+      final profileResponse = await http.get(
+        Uri.parse('http://13.60.192.118:3001/profiles/job-seeker'),
+        headers: {'Authorization': 'Bearer $token'},
+      );
+      final profileData = jsonDecode(profileResponse.body);
+      final profileText = jsonEncode(profileData);
+
+      final response = await http.post(
+        Uri.parse('http://13.60.192.118:3001/ai/match/score'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({
+          'profile_text': profileText,
+          'job_description_text': job['description'] ?? job['title'],
+        }),
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final data = jsonDecode(response.body);
+        setState(() {
+          _matchScores[jobId] = {'loading': false, 'score': data['match_score']};
+        });
+      } else {
+        setState(() {
+          _matchScores[jobId] = {'loading': false};
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _matchScores[jobId] = {'loading': false};
+      });
     }
   }
 
@@ -330,23 +380,38 @@ class _JobsScreenState extends State<JobsScreen> {
                               ],
                             ),
                             const SizedBox(height: 16),
-                            Align(
-                              alignment: Alignment.centerRight,
-                              child: ElevatedButton(
-                                onPressed: () {
-                                  setState(() {
-                                    _applyingJobId = isApplying ? null : job['id'];
-                                  });
-                                },
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: isApplying ? Colors.grey[700] : const Color(0xFF6366F1),
-                                  foregroundColor: Colors.white,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                if (_matchScores[job['id']]?['score'] != null)
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                    decoration: BoxDecoration(color: const Color(0xFF00F0FF).withOpacity(0.1), borderRadius: BorderRadius.circular(16)),
+                                    child: Text('${_matchScores[job['id']]!['score']}% Match', style: const TextStyle(color: Color(0xFF00F0FF), fontWeight: FontWeight.bold)),
+                                  )
+                                else
+                                  TextButton.icon(
+                                    onPressed: _matchScores[job['id']]?['loading'] == true ? null : () => _calculateMatchScore(job),
+                                    icon: const Icon(Icons.auto_awesome, size: 16),
+                                    label: Text(_matchScores[job['id']]?['loading'] == true ? '...' : 'Predict Match', style: const TextStyle(fontSize: 12)),
+                                    style: TextButton.styleFrom(foregroundColor: const Color(0xFF00F0FF), padding: EdgeInsets.zero),
                                   ),
+                                ElevatedButton(
+                                  onPressed: () {
+                                    setState(() {
+                                      _applyingJobId = isApplying ? null : job['id'];
+                                    });
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: isApplying ? Colors.grey[700] : const Color(0xFF6366F1),
+                                    foregroundColor: Colors.white,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                  ),
+                                  child: Text(isApplying ? 'Cancel' : 'Apply Now'),
                                 ),
-                                child: Text(isApplying ? 'Cancel' : 'Apply Now'),
-                              ),
+                              ],
                             ),
                             if (isApplying) ...[
                               const SizedBox(height: 16),
