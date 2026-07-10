@@ -47,10 +47,29 @@ export class JobsService {
     if (user.role === 'JOB_SEEKER') {
       const profile = await this.prisma.jobSeekerProfile.findUnique({ where: { userId } });
       if (profile) {
-        // Keyword matching
-        const keywords = [...profile.skills, ...(profile.bio ? profile.bio.split(' ') : [])]
-          .map(k => k.toLowerCase().replace(/[^a-z0-9]/g, ''))
-          .filter(k => k.length > 2); // basic noise filtering
+        // Collect all relevant profile data into a giant text block for keyword extraction
+        const experienceArray = profile.experience as any[] || [];
+        const educationArray = profile.education as any[] || [];
+        const certsArray = profile.certificates as any[] || [];
+
+        const experienceRoles = experienceArray.map(e => e.role).join(' ');
+        const educationCourses = educationArray.map(e => e.course).join(' ');
+        const certNames = certsArray.map(c => c.name).join(' ');
+
+        const profileTextElements = [
+          profile.profession,
+          profile.skilledProfession,
+          profile.bio,
+          profile.resumeContent,
+          experienceRoles,
+          educationCourses,
+          certNames,
+          ...profile.skills
+        ].filter(Boolean).join(' ');
+
+        const keywords = profileTextElements.split(/[^a-zA-Z0-9]/)
+          .map(k => k.toLowerCase())
+          .filter(k => k.length > 3); // filter small noise words
 
         jobs = jobs.map(job => {
           const jobText = (job.title + ' ' + job.description).toLowerCase();
@@ -59,7 +78,9 @@ export class JobsService {
             if (jobText.includes(word)) score++;
           }
           return { ...job, matchScore: score };
-        }).sort((a, b) => b.matchScore - a.matchScore);
+        })
+        .filter(job => job.matchScore > 0) // ONLY return matching jobs
+        .sort((a, b) => b.matchScore - a.matchScore);
       }
 
       if (user.subscriptionTier === 'FREE') {
