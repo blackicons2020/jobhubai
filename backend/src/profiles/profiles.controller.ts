@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Put, Body, UseGuards, Request, ForbiddenException } from '@nestjs/common';
+import { Controller, Post, Get, Put, Body, UseGuards, Request, ForbiddenException, Param } from '@nestjs/common';
 import { ProfilesService } from './profiles.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { Prisma } from '@prisma/client';
@@ -55,5 +55,18 @@ export class ProfilesController {
       throw new ForbiddenException('Only EMPLOYERs can view this profile type.');
     }
     return this.profilesService.getEmployerProfile(req.user.userId);
+  }
+
+  @Get('job-seeker/completion')
+  async getJobSeekerCompletion(@Request() req) {
+    if (req.user.role !== 'JOB_SEEKER') {
+      throw new ForbiddenException('Only JOB_SEEKERs can view this profile type.');
+    }
+    return this.profilesService.getJobSeekerCompletionPercentage(req.user.userId);
+  }
+
+  @Get('employer/:id/public')
+  async getPublicEmployerProfile(@Request() req, @Param('id') id: string) {
+    return this.profilesService.getPublicEmployerProfile(id);
   }
 }

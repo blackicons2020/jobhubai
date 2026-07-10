@@ -16,28 +16,52 @@ export default function OnboardingPage() {
   const [lastName, setLastName] = useState('');
   const [otherNames, setOtherNames] = useState('');
   const [gender, setGender] = useState('');
+  const [dateOfBirth, setDateOfBirth] = useState('');
+  const [phone, setPhone] = useState('');
+  const [nationality, setNationality] = useState('');
+  const [maritalStatus, setMaritalStatus] = useState('');
+  
+  const [headline, setHeadline] = useState('');
   const [profession, setProfession] = useState('');
   const [isSkilledProfessional, setIsSkilledProfessional] = useState(false);
   const [skilledProfession, setSkilledProfession] = useState('');
-  const [dateOfBirth, setDateOfBirth] = useState('');
+  const [summary, setSummary] = useState('');
+  
   const [residenceCountry, setResidenceCountry] = useState('');
   const [residenceState, setResidenceState] = useState('');
   const [residenceCity, setResidenceCity] = useState('');
   const [citizenshipCountry, setCitizenshipCountry] = useState('');
-  const [citizenshipState, setCitizenshipState] = useState('');
+  const [willingToRelocate, setWillingToRelocate] = useState(false);
   
-  // Lists for arrays
+  const [desiredJobTitle, setDesiredJobTitle] = useState('');
+  const [preferredIndustry, setPreferredIndustry] = useState('');
+  const [employmentType, setEmploymentType] = useState('');
+  const [workArrangement, setWorkArrangement] = useState('');
+  const [expectedSalary, setExpectedSalary] = useState('');
+  const [availability, setAvailability] = useState('');
+  
   const [education, setEducation] = useState<any[]>([]);
   const [experience, setExperience] = useState<any[]>([]);
   const [certificates, setCertificates] = useState<any[]>([]);
   const [achievements, setAchievements] = useState<any[]>([]);
+  const [projects, setProjects] = useState<any[]>([]);
+  const [references, setReferences] = useState<any[]>([]);
+  
+  const [socialLinks, setSocialLinks] = useState({ linkedin: '', github: '', website: '' });
   
   // Employer Form State
   const [companyName, setCompanyName] = useState('');
   const [description, setDescription] = useState('');
+  const [industry, setIndustry] = useState('');
+  const [companySize, setCompanySize] = useState('');
+  const [foundedYear, setFoundedYear] = useState('');
   const [locationCountry, setLocationCountry] = useState('');
   const [locationState, setLocationState] = useState('');
   const [locationCity, setLocationCity] = useState('');
+  
+  const [hrContactName, setHrContactName] = useState('');
+  const [hrEmail, setHrEmail] = useState('');
+  const [hrPhone, setHrPhone] = useState('');
   
   // Shared
   const [profilePicUrl, setProfilePicUrl] = useState('');
@@ -69,26 +93,46 @@ export default function OnboardingPage() {
               setLastName(prof.lastName || '');
               setOtherNames(prof.otherNames || '');
               setGender(prof.gender || '');
+              setDateOfBirth(prof.dateOfBirth ? prof.dateOfBirth.split('T')[0] : '');
+              setPhone(prof.phone || '');
+              setNationality(prof.nationality || '');
+              setMaritalStatus(prof.maritalStatus || '');
+              setHeadline(prof.headline || '');
               setProfession(prof.profession || '');
               setIsSkilledProfessional(prof.isSkilledProfessional || false);
               setSkilledProfession(prof.skilledProfession || '');
-              setDateOfBirth(prof.dateOfBirth ? prof.dateOfBirth.split('T')[0] : '');
+              setSummary(prof.summary || '');
               setResidenceCountry(prof.residenceCountry || '');
               setResidenceState(prof.residenceState || '');
               setResidenceCity(prof.residenceCity || '');
               setCitizenshipCountry(prof.citizenshipCountry || '');
-              setCitizenshipState(prof.citizenshipState || '');
+              setWillingToRelocate(prof.willingToRelocate || false);
+              setDesiredJobTitle(prof.desiredJobTitle || '');
+              setPreferredIndustry(prof.preferredIndustry || '');
+              setEmploymentType(prof.employmentType || '');
+              setWorkArrangement(prof.workArrangement || '');
+              setExpectedSalary(prof.expectedSalary || '');
+              setAvailability(prof.availability || '');
               setEducation(prof.education || []);
               setExperience(prof.experience || []);
               setCertificates(prof.certificates || []);
               setAchievements(prof.achievements || []);
+              setProjects(prof.projects || []);
+              setReferences(prof.references || []);
+              setSocialLinks(prof.socialLinks || { linkedin: '', github: '', website: '' });
               setProfilePicUrl(prof.profilePicture || '');
             } else {
               setCompanyName(prof.companyName || '');
               setDescription(prof.description || '');
+              setIndustry(prof.industry || '');
+              setCompanySize(prof.companySize || '');
+              setFoundedYear(prof.foundedYear ? prof.foundedYear.toString() : '');
               setLocationCountry(prof.locationCountry || '');
               setLocationState(prof.locationState || '');
               setLocationCity(prof.locationCity || '');
+              setHrContactName(prof.hrContactName || '');
+              setHrEmail(prof.hrEmail || '');
+              setHrPhone(prof.hrPhone || '');
               setProfilePicUrl(prof.profilePicture || '');
             }
           }
@@ -109,7 +153,7 @@ export default function OnboardingPage() {
     const formData = new FormData();
     formData.append('file', profilePicFile);
     try {
-      const res = await fetch('http://13.60.192.118:3001/uploads', {
+      const res = await fetch('http://13.60.192.118:3001/uploads/profile-picture', {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
         body: formData
@@ -135,15 +179,19 @@ export default function OnboardingPage() {
     if (user?.role === 'JOB_SEEKER') {
       endpoint = '/profiles/job-seeker';
       payload = {
-        firstName, lastName, otherNames, gender, profession, isSkilledProfessional, skilledProfession,
+        firstName, lastName, otherNames, gender, phone, nationality, maritalStatus,
         dateOfBirth: dateOfBirth ? new Date(dateOfBirth).toISOString() : null,
-        residenceCountry, residenceState, residenceCity, citizenshipCountry, citizenshipState,
-        education, experience, certificates, achievements, profilePicture: uploadedUrl, skills: []
+        headline, profession, isSkilledProfessional, skilledProfession, summary,
+        residenceCountry, residenceState, residenceCity, citizenshipCountry, willingToRelocate,
+        desiredJobTitle, preferredIndustry, employmentType, workArrangement, expectedSalary, availability,
+        education, experience, certificates, achievements, projects, references,
+        socialLinks, profilePicture: uploadedUrl, skills: []
       };
     } else {
       endpoint = '/profiles/employer';
       payload = {
-        companyName, description, locationCountry, locationState, locationCity, profilePicture: uploadedUrl
+        companyName, description, industry, companySize, foundedYear: parseInt(foundedYear) || null,
+        locationCountry, locationState, locationCity, hrContactName, hrEmail, hrPhone, profilePicture: uploadedUrl
       };
     }
     
@@ -154,11 +202,7 @@ export default function OnboardingPage() {
         body: JSON.stringify(payload)
       });
       if (res.ok) {
-        if (user.role === 'EMPLOYER') {
-          window.location.href = '/applications';
-        } else {
-          window.location.href = '/seeker-dashboard';
-        }
+        window.location.href = '/profile';
       } else {
         alert('Failed to save profile.');
       }
@@ -181,12 +225,22 @@ export default function OnboardingPage() {
             <input placeholder="First Name" value={firstName} onChange={e => setFirstName(e.target.value)} className="input-field" />
             <input placeholder="Last Name" value={lastName} onChange={e => setLastName(e.target.value)} className="input-field" />
             <input placeholder="Other Names (Optional)" value={otherNames} onChange={e => setOtherNames(e.target.value)} className="input-field" />
-            <select value={gender} onChange={e => setGender(e.target.value)} className="input-field">
-              <option value="">Select Gender</option>
-              <option value="Male">Male</option>
-              <option value="Female">Female</option>
-              <option value="Other">Other</option>
-            </select>
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <input placeholder="Phone Number" value={phone} onChange={e => setPhone(e.target.value)} className="input-field" />
+              <input placeholder="Nationality" value={nationality} onChange={e => setNationality(e.target.value)} className="input-field" />
+            </div>
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <select value={gender} onChange={e => setGender(e.target.value)} className="input-field">
+                <option value="">Select Gender</option>
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+              </select>
+              <select value={maritalStatus} onChange={e => setMaritalStatus(e.target.value)} className="input-field">
+                <option value="">Marital Status</option>
+                <option value="Single">Single</option>
+                <option value="Married">Married</option>
+              </select>
+            </div>
             <input type="date" value={dateOfBirth} onChange={e => setDateOfBirth(e.target.value)} className="input-field" title="Date of Birth" />
           </div>
         );
@@ -194,10 +248,12 @@ export default function OnboardingPage() {
         return (
           <div className="fly-in">
             <h2>Professional Identity</h2>
-            <input placeholder="Primary Profession (e.g. Software Engineer)" value={profession} onChange={e => setProfession(e.target.value)} className="input-field" />
+            <input placeholder="Professional Headline (e.g. Senior Software Developer)" value={headline} onChange={e => setHeadline(e.target.value)} className="input-field" />
+            <input placeholder="Primary Profession" value={profession} onChange={e => setProfession(e.target.value)} className="input-field" />
+            <textarea placeholder="Professional Summary (About Me)" value={summary} onChange={e => setSummary(e.target.value)} className="input-field" rows={4} />
             <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', margin: '1rem 0', color: 'white' }}>
               <input type="checkbox" checked={isSkilledProfessional} onChange={e => setIsSkilledProfessional(e.target.checked)} />
-              I am a skilled/trade professional (e.g. Baker, Fashion Designer, Plumber)
+              I am a skilled/trade professional
             </label>
             {isSkilledProfessional && (
               <input placeholder="Specify Skill/Trade" value={skilledProfession} onChange={e => setSkilledProfession(e.target.value)} className="input-field" />
@@ -207,47 +263,56 @@ export default function OnboardingPage() {
       case 3:
         return (
           <div className="fly-in">
-            <h2>Location & Citizenship</h2>
-            <h3>Residence</h3>
+            <h2>Location & Preferences</h2>
             <div style={{ display: 'flex', gap: '0.5rem' }}>
               <input placeholder="Country" value={residenceCountry} onChange={e => setResidenceCountry(e.target.value)} className="input-field" />
               <input placeholder="State" value={residenceState} onChange={e => setResidenceState(e.target.value)} className="input-field" />
               <input placeholder="City" value={residenceCity} onChange={e => setResidenceCity(e.target.value)} className="input-field" />
             </div>
-            <h3 style={{ marginTop: '1rem' }}>Citizenship</h3>
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
-              <input placeholder="Country" value={citizenshipCountry} onChange={e => setCitizenshipCountry(e.target.value)} className="input-field" />
-              <input placeholder="State (Optional)" value={citizenshipState} onChange={e => setCitizenshipState(e.target.value)} className="input-field" />
+            <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem' }}>
+              <label style={{ color: 'white', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <input type="checkbox" checked={willingToRelocate} onChange={e => setWillingToRelocate(e.target.checked)} />
+                Willing to relocate
+              </label>
             </div>
           </div>
         );
       case 4:
         return (
           <div className="fly-in">
-            <h2>Education (Optional)</h2>
-            <p style={{ color: 'var(--text-secondary)' }}>You can add these now, or click Next to skip this step.</p>
-            <button className="btn-primary" onClick={() => setEducation([...education, { school: '', course: '', dates: '', yearGraduated: '' }])}>Add Education</button>
-            {education.map((ed, idx) => (
-              <div key={idx} style={{ padding: '1rem', background: 'rgba(255,255,255,0.05)', marginTop: '0.5rem', borderRadius: '8px' }}>
-                <input placeholder="Institution / School" value={ed.school} onChange={e => { const n = [...education]; n[idx].school = e.target.value; setEducation(n); }} className="input-field" />
-                <input placeholder="Course of Study" value={ed.course} onChange={e => { const n = [...education]; n[idx].course = e.target.value; setEducation(n); }} className="input-field" />
-                <input placeholder="Dates Attended (e.g. 2018 - 2022)" value={ed.dates} onChange={e => { const n = [...education]; n[idx].dates = e.target.value; setEducation(n); }} className="input-field" />
-                <input placeholder="Year Graduated" type="number" value={ed.yearGraduated} onChange={e => { const n = [...education]; n[idx].yearGraduated = e.target.value; setEducation(n); }} className="input-field" />
-              </div>
-            ))}
+            <h2>Job Preferences</h2>
+            <input placeholder="Desired Job Title" value={desiredJobTitle} onChange={e => setDesiredJobTitle(e.target.value)} className="input-field" />
+            <input placeholder="Preferred Industry" value={preferredIndustry} onChange={e => setPreferredIndustry(e.target.value)} className="input-field" />
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <select value={employmentType} onChange={e => setEmploymentType(e.target.value)} className="input-field">
+                <option value="">Employment Type</option>
+                <option value="Full-time">Full-time</option>
+                <option value="Part-time">Part-time</option>
+                <option value="Contract">Contract</option>
+              </select>
+              <select value={workArrangement} onChange={e => setWorkArrangement(e.target.value)} className="input-field">
+                <option value="">Work Arrangement</option>
+                <option value="Remote">Remote</option>
+                <option value="On-site">On-site</option>
+                <option value="Hybrid">Hybrid</option>
+              </select>
+            </div>
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <input placeholder="Expected Salary" value={expectedSalary} onChange={e => setExpectedSalary(e.target.value)} className="input-field" />
+              <input placeholder="Availability (e.g. Immediately)" value={availability} onChange={e => setAvailability(e.target.value)} className="input-field" />
+            </div>
           </div>
         );
       case 5:
         return (
           <div className="fly-in">
-            <h2>Experience (Optional)</h2>
-            <p style={{ color: 'var(--text-secondary)' }}>You can add these now, or click Next to skip this step.</p>
-            <button className="btn-primary" onClick={() => setExperience([...experience, { company: '', role: '', dates: '' }])}>Add Experience</button>
-            {experience.map((ex, idx) => (
+            <h2>Education</h2>
+            <button className="btn-primary" onClick={() => setEducation([...education, { school: '', course: '', dates: '', yearGraduated: '' }])}>Add Education</button>
+            {education.map((ed, idx) => (
               <div key={idx} style={{ padding: '1rem', background: 'rgba(255,255,255,0.05)', marginTop: '0.5rem', borderRadius: '8px' }}>
-                <input placeholder="Company Worked" value={ex.company} onChange={e => { const n = [...experience]; n[idx].company = e.target.value; setExperience(n); }} className="input-field" />
-                <input placeholder="Role" value={ex.role} onChange={e => { const n = [...experience]; n[idx].role = e.target.value; setExperience(n); }} className="input-field" />
-                <input placeholder="Dates (e.g. Jan 2020 - Present)" value={ex.dates} onChange={e => { const n = [...experience]; n[idx].dates = e.target.value; setExperience(n); }} className="input-field" />
+                <input placeholder="Institution / School" value={ed.school} onChange={e => { const n = [...education]; n[idx].school = e.target.value; setEducation(n); }} className="input-field" />
+                <input placeholder="Course of Study" value={ed.course} onChange={e => { const n = [...education]; n[idx].course = e.target.value; setEducation(n); }} className="input-field" />
+                <input placeholder="Dates (e.g. 2018-2022)" value={ed.dates} onChange={e => { const n = [...education]; n[idx].dates = e.target.value; setEducation(n); }} className="input-field" />
               </div>
             ))}
           </div>
@@ -255,13 +320,14 @@ export default function OnboardingPage() {
       case 6:
         return (
           <div className="fly-in">
-            <h2>Certifications & Degrees (Optional)</h2>
-            <p style={{ color: 'var(--text-secondary)' }}>You can add these now, or click Next to skip this step.</p>
-            <button className="btn-primary" onClick={() => setCertificates([...certificates, { name: '', date: '' }])}>Add Certification/Degree</button>
-            {certificates.map((cert, idx) => (
+            <h2>Experience</h2>
+            <button className="btn-primary" onClick={() => setExperience([...experience, { company: '', role: '', dates: '', responsibilities: '' }])}>Add Experience</button>
+            {experience.map((ex, idx) => (
               <div key={idx} style={{ padding: '1rem', background: 'rgba(255,255,255,0.05)', marginTop: '0.5rem', borderRadius: '8px' }}>
-                <input placeholder="Certification / Degree Name" value={cert.name} onChange={e => { const n = [...certificates]; n[idx].name = e.target.value; setCertificates(n); }} className="input-field" />
-                <input placeholder="Date Obtained (e.g. 2023)" value={cert.date} onChange={e => { const n = [...certificates]; n[idx].date = e.target.value; setCertificates(n); }} className="input-field" />
+                <input placeholder="Company" value={ex.company} onChange={e => { const n = [...experience]; n[idx].company = e.target.value; setExperience(n); }} className="input-field" />
+                <input placeholder="Role" value={ex.role} onChange={e => { const n = [...experience]; n[idx].role = e.target.value; setExperience(n); }} className="input-field" />
+                <input placeholder="Dates (e.g. Jan 2020 - Present)" value={ex.dates} onChange={e => { const n = [...experience]; n[idx].dates = e.target.value; setExperience(n); }} className="input-field" />
+                <textarea placeholder="Responsibilities & Achievements" value={ex.responsibilities || ''} onChange={e => { const n = [...experience]; n[idx].responsibilities = e.target.value; setExperience(n); }} className="input-field" rows={3} />
               </div>
             ))}
           </div>
@@ -269,13 +335,21 @@ export default function OnboardingPage() {
       case 7:
         return (
           <div className="fly-in">
-            <h2>Achievements & Awards (Optional)</h2>
-            <p style={{ color: 'var(--text-secondary)' }}>You can add these now, or click Next to skip this step.</p>
-            <button className="btn-primary" onClick={() => setAchievements([...achievements, { title: '', date: '' }])}>Add Achievement/Award</button>
-            {achievements.map((ach, idx) => (
+            <h2>Certifications & Projects</h2>
+            <button className="btn-primary" onClick={() => setCertificates([...certificates, { name: '', date: '' }])}>Add Certification</button>
+            {certificates.map((cert, idx) => (
               <div key={idx} style={{ padding: '1rem', background: 'rgba(255,255,255,0.05)', marginTop: '0.5rem', borderRadius: '8px' }}>
-                <input placeholder="Achievement / Award Title" value={ach.title} onChange={e => { const n = [...achievements]; n[idx].title = e.target.value; setAchievements(n); }} className="input-field" />
-                <input placeholder="Date (e.g. 2022)" value={ach.date} onChange={e => { const n = [...achievements]; n[idx].date = e.target.value; setAchievements(n); }} className="input-field" />
+                <input placeholder="Certification Name" value={cert.name} onChange={e => { const n = [...certificates]; n[idx].name = e.target.value; setCertificates(n); }} className="input-field" />
+                <input placeholder="Date Obtained" value={cert.date} onChange={e => { const n = [...certificates]; n[idx].date = e.target.value; setCertificates(n); }} className="input-field" />
+              </div>
+            ))}
+            <hr style={{ margin: '1rem 0', borderColor: 'rgba(255,255,255,0.1)' }} />
+            <button className="btn-primary" onClick={() => setProjects([...projects, { title: '', description: '', liveLink: '' }])}>Add Project</button>
+            {projects.map((proj, idx) => (
+              <div key={idx} style={{ padding: '1rem', background: 'rgba(255,255,255,0.05)', marginTop: '0.5rem', borderRadius: '8px' }}>
+                <input placeholder="Project Title" value={proj.title} onChange={e => { const n = [...projects]; n[idx].title = e.target.value; setProjects(n); }} className="input-field" />
+                <input placeholder="Description" value={proj.description} onChange={e => { const n = [...projects]; n[idx].description = e.target.value; setProjects(n); }} className="input-field" />
+                <input placeholder="Live Link (Optional)" value={proj.liveLink} onChange={e => { const n = [...projects]; n[idx].liveLink = e.target.value; setProjects(n); }} className="input-field" />
               </div>
             ))}
           </div>
@@ -283,7 +357,12 @@ export default function OnboardingPage() {
       case 8:
         return (
           <div className="fly-in">
-            <h2>Profile Picture</h2>
+            <h2>Social Links & Profile Picture</h2>
+            <input placeholder="LinkedIn URL" value={socialLinks.linkedin} onChange={e => setSocialLinks({...socialLinks, linkedin: e.target.value})} className="input-field" />
+            <input placeholder="GitHub URL" value={socialLinks.github} onChange={e => setSocialLinks({...socialLinks, github: e.target.value})} className="input-field" />
+            <input placeholder="Personal Website" value={socialLinks.website} onChange={e => setSocialLinks({...socialLinks, website: e.target.value})} className="input-field" />
+            
+            <h3 style={{ marginTop: '1rem' }}>Profile Picture</h3>
             {profilePicUrl && <img src={profilePicUrl} alt="Preview" style={{ width: 100, height: 100, borderRadius: '50%', objectFit: 'cover', marginBottom: '1rem' }} />}
             <input type="file" accept="image/*" onChange={e => {
               if (e.target.files && e.target.files[0]) {
@@ -305,15 +384,26 @@ export default function OnboardingPage() {
             <h2>Company Information</h2>
             <input placeholder="Company Name" value={companyName} onChange={e => setCompanyName(e.target.value)} className="input-field" />
             <textarea placeholder="Company Description" value={description} onChange={e => setDescription(e.target.value)} className="input-field" rows={4} />
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <input placeholder="Industry" value={industry} onChange={e => setIndustry(e.target.value)} className="input-field" />
+              <input placeholder="Company Size (e.g. 10-50)" value={companySize} onChange={e => setCompanySize(e.target.value)} className="input-field" />
+              <input placeholder="Founded Year" type="number" value={foundedYear} onChange={e => setFoundedYear(e.target.value)} className="input-field" />
+            </div>
           </div>
         );
       case 2:
         return (
           <div className="fly-in">
-            <h2>Company Location</h2>
-            <input placeholder="Country" value={locationCountry} onChange={e => setLocationCountry(e.target.value)} className="input-field" />
-            <input placeholder="State" value={locationState} onChange={e => setLocationState(e.target.value)} className="input-field" />
-            <input placeholder="City / Town" value={locationCity} onChange={e => setLocationCity(e.target.value)} className="input-field" />
+            <h2>Location & Contact</h2>
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <input placeholder="Country" value={locationCountry} onChange={e => setLocationCountry(e.target.value)} className="input-field" />
+              <input placeholder="State" value={locationState} onChange={e => setLocationState(e.target.value)} className="input-field" />
+              <input placeholder="City" value={locationCity} onChange={e => setLocationCity(e.target.value)} className="input-field" />
+            </div>
+            <hr style={{ margin: '1rem 0', borderColor: 'rgba(255,255,255,0.1)' }} />
+            <input placeholder="HR Contact Name" value={hrContactName} onChange={e => setHrContactName(e.target.value)} className="input-field" />
+            <input placeholder="HR Email" value={hrEmail} onChange={e => setHrEmail(e.target.value)} className="input-field" />
+            <input placeholder="HR Phone" value={hrPhone} onChange={e => setHrPhone(e.target.value)} className="input-field" />
           </div>
         );
       case 3:

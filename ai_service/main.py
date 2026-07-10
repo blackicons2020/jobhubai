@@ -69,3 +69,48 @@ def api_generate_embedding(req: EmbeddingRequest):
         return {"embedding": embedding}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+from services.advanced_engine import score_profile, skill_gap_analysis, estimate_salary, career_suggestions, generate_interview_questions, generate_job_description
+
+@app.post("/ai/profile/score")
+def api_profile_score(req: dict):
+    try:
+        return score_profile(req)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/ai/skills/gap")
+def api_skill_gap(req: dict):
+    try:
+        return skill_gap_analysis(req.get("profile", {}), req.get("job", {}))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/ai/salary/estimate")
+def api_salary_estimate(req: dict):
+    try:
+        return estimate_salary(req.get("job_title", ""), req.get("location", ""), req.get("experience_years", 0))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/ai/career/suggestions")
+def api_career_suggestions(req: dict):
+    try:
+        return {"suggestions": career_suggestions(req)}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/ai/interview/questions")
+def api_interview_questions(req: dict):
+    try:
+        return {"questions": generate_interview_questions(req.get("job", {}), req.get("profile", {}))}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/ai/job-description/generate")
+def api_generate_job_description(req: dict):
+    try:
+        return {"description": generate_job_description(req)}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+

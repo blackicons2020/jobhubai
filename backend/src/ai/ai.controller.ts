@@ -63,4 +63,39 @@ export class AiController {
     const score = await this.aiService.calculateMatchScore(profileText, jobText);
     return { match_score: score };
   }
+
+  @Post('profile/score')
+  async getProfileScore(@Request() req, @Body() profileData: any) {
+    await this.checkGenerationLimit(req.user.userId);
+    return this.aiService.getProfileScore(profileData);
+  }
+
+  @Post('skills/gap')
+  async getSkillGap(@Request() req, @Body('profile') profileData: any, @Body('job') jobData: any) {
+    await this.checkGenerationLimit(req.user.userId);
+    return this.aiService.getSkillGap(profileData, jobData);
+  }
+
+  @Post('salary/estimate')
+  async getSalaryEstimate(@Request() req, @Body('job_title') jobTitle: string, @Body('location') location: string, @Body('experience_years') exp: number) {
+    return this.aiService.getSalaryEstimate(jobTitle, location, exp);
+  }
+
+  @Post('career/suggestions')
+  async getCareerSuggestions(@Request() req, @Body() profileData: any) {
+    await this.checkGenerationLimit(req.user.userId);
+    return this.aiService.getCareerSuggestions(profileData);
+  }
+
+  @Post('interview/questions')
+  async getInterviewQuestions(@Request() req, @Body('job') jobData: any, @Body('profile') profileData: any) {
+    await this.checkGenerationLimit(req.user.userId);
+    return this.aiService.getInterviewQuestions(jobData, profileData);
+  }
+
+  @Post('job-description/generate')
+  async generateJobDescription(@Request() req, @Body() jobData: any) {
+    await this.checkGenerationLimit(req.user.userId);
+    return this.aiService.generateJobDescription(jobData);
+  }
 }

@@ -63,6 +63,41 @@ model JobSeekerProfile {
   skills           String[]
   autoApplyEnabled Boolean  @default(false)
   autoApplyKeywords String[]
+  
+  // Phase 1 Additions: Personal & Preferences
+  phone              String?
+  nationality        String?
+  languages          Json?
+  maritalStatus      String?
+  headline           String?
+  willingToRelocate  Boolean  @default(false)
+  remotePreference   String?
+  summary            String?
+  desiredJobTitle    String?
+  preferredIndustry  String?
+  employmentType     String?
+  workArrangement    String?
+  preferredLocations Json?
+  expectedSalary     String?
+  availability       String?
+  
+  // Phase 1 Additions: Professional
+  detailedSkills     Json?
+  portfolio          Json?
+  projects           Json?
+  references         Json?
+  referencesOnRequest Boolean @default(true)
+  socialLinks        Json?
+  documents          Json?
+  
+  // Phase 1 Additions: Settings & Stats
+  profileVisibility  String?  @default("PUBLIC")
+  hideCurrentEmployer Boolean @default(false)
+  hideContactDetails  Boolean @default(false)
+  verificationStatus String?  @default("UNVERIFIED")
+  verificationDocs   Json?
+  profileViews       Int      @default(0)
+
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 
@@ -80,6 +115,39 @@ model Employer {
   locationCity   String?
   website        String?
   profilePicture String?
+  
+  // Phase 1 Additions: Company Info
+  industry           String?
+  businessType       String?
+  companySize        String?
+  foundedYear        Int?
+  registrationNumber String?
+  taxId              String?
+  bannerImage        String?
+  headquarters       String?
+  
+  // Phase 1 Additions: Culture & Contact
+  mission            String?
+  vision             String?
+  coreValues         Json?
+  culture            String?
+  whyWorkWithUs      String?
+  benefits           Json?
+  hrContactName      String?
+  hrEmail            String?
+  hrPhone            String?
+  
+  // Phase 1 Additions: Media & Locations
+  socialLinks        Json?
+  officeLocations    Json?
+  companyPhotos      Json?
+  companyVideos      Json?
+  
+  // Phase 1 Additions: Settings & Stats
+  verificationStatus String?  @default("UNVERIFIED")
+  profileViews       Int      @default(0)
+  followers          Int      @default(0)
+
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
@@ -95,6 +163,15 @@ model Job {
   location    String?
   salary      String?
   isRemote    Boolean  @default(false)
+  
+  // Phase 1 Additions: Job Details
+  industry           String?
+  employmentType     String?
+  experienceLevel    String?
+  skillsRequired     Json?
+  benefits           Json?
+  deadline           DateTime?
+
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 

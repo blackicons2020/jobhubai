@@ -16,6 +16,10 @@ export default function SeekerDashboard() {
   const [profile, setProfile] = useState<any>(null);
   const [user, setUser] = useState<any>(null);
 
+  // AI Insights State
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiInsights, setAiInsights] = useState<any>(null);
+
   useEffect(() => {
     const fetchProfileAndApps = async () => {
       const token = localStorage.getItem('token');
@@ -102,6 +106,32 @@ export default function SeekerDashboard() {
   const regularApps = applications.filter(a => a.status !== 'INVITED' && a.status !== 'DECLINED_OFFER');
   const invitations = applications.filter(a => a.status === 'INVITED' || a.status === 'ACCEPTED_OFFER');
 
+  const fetchAiInsights = async () => {
+    setAiLoading(true);
+    const token = localStorage.getItem('token');
+    try {
+      const pRes = await fetch('http://13.60.192.118:3001/ai/career/suggestions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify(profile)
+      });
+      const cSuggs = await pRes.json();
+      
+      const sRes = await fetch('http://13.60.192.118:3001/ai/salary/estimate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ job_title: profile?.profession || 'Job Seeker', location: profile?.residenceCity || 'Unknown', experience_years: 3 })
+      });
+      const sEst = await sRes.json();
+
+      setAiInsights({ suggestions: cSuggs.suggestions || [], salary: sEst });
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
   return (
     <main style={{ padding: '2rem 4rem', maxWidth: '1200px', margin: '0 auto' }}>
       
@@ -117,6 +147,31 @@ export default function SeekerDashboard() {
           </div>
           <h2 style={{ margin: 0, fontSize: '1.8rem' }}>{profile.firstName} {profile.lastName}</h2>
           <p style={{ margin: '4px 0 1rem 0', color: 'var(--secondary-color)', fontSize: '1.1rem' }}>{profile.profession || 'Job Seeker'}</p>
+          
+          <button className="btn-primary" onClick={fetchAiInsights} disabled={aiLoading} style={{ background: 'transparent', border: '1px solid #00f0ff', color: '#00f0ff', boxShadow: 'none' }}>
+            {aiLoading ? 'Generating AI Insights...' : '✨ Generate AI Career Insights'}
+          </button>
+
+          {aiInsights && (
+            <div className="glass-panel" style={{ marginTop: '2rem', padding: '1.5rem', textAlign: 'left', width: '100%', maxWidth: '600px', borderLeft: '4px solid #00f0ff' }}>
+              <h3 style={{ marginTop: 0, color: '#00f0ff', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>✨ AI Career Insights</h3>
+              
+              <div style={{ marginBottom: '1.5rem' }}>
+                <h4 style={{ margin: '0 0 0.5rem 0' }}>Estimated Market Salary</h4>
+                <p style={{ margin: 0, fontSize: '1.5rem', fontWeight: 'bold' }}>{aiInsights.salary?.currency} {aiInsights.salary?.min?.toLocaleString()} - {aiInsights.salary?.max?.toLocaleString()}</p>
+                <p style={{ margin: '0.25rem 0 0 0', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>{aiInsights.salary?.reasoning}</p>
+              </div>
+
+              <div>
+                <h4 style={{ margin: '0 0 0.5rem 0' }}>Career Path Suggestions</h4>
+                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                  {aiInsights.suggestions?.map((s: string, idx: number) => (
+                    <span key={idx} style={{ background: 'rgba(255,255,255,0.1)', padding: '4px 12px', borderRadius: '16px', fontSize: '0.9rem' }}>{s}</span>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
 

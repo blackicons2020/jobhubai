@@ -197,12 +197,30 @@ export default function EmployerDashboard() {
               {matching ? <p>Finding best matches...</p> : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                   {matches.length === 0 ? <p>No exact matches found yet.</p> : matches.map(m => (
-                    <div key={m.id} style={{ padding: '1rem', background: 'rgba(0,0,0,0.3)', borderRadius: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <div>
-                        <h3 style={{margin:0}}>{m.firstName} {m.lastName} <span style={{fontSize: '0.8rem', color: '#00f0ff', marginLeft: '8px'}}>(Match Score: {m.matchScore})</span></h3>
-                        <p style={{fontSize:'0.9rem', color: 'var(--text-secondary)', margin: '4px 0'}}>{m.skills.join(', ')}</p>
+                    <div key={m.id} className="glass-panel" style={{ padding: '1.5rem', marginBottom: '1rem', borderRadius: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderLeft: '4px solid var(--primary-color)' }}>
+                      <div style={{ display: 'flex', gap: '1.5rem' }}>
+                        <div style={{ width: 60, height: 60, borderRadius: '50%', background: 'rgba(255,255,255,0.1)', overflow: 'hidden' }}>
+                          {m.profilePicture ? <img src={m.profilePicture} alt="Profile" style={{width:'100%', height:'100%', objectFit:'cover'}} /> : <div style={{width:'100%', height:'100%', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'2rem'}}>👤</div>}
+                        </div>
+                        <div>
+                          <h3 style={{margin:0, display: 'flex', alignItems: 'center', gap: '0.5rem'}}>
+                            {m.firstName} {m.lastName}
+                            {m.verificationStatus === 'VERIFIED' && <span style={{ color: '#00f0ff', fontSize: '1.2rem' }} title="Verified">✔</span>}
+                            <span style={{background: 'rgba(0, 240, 255, 0.1)', color: '#00f0ff', padding: '2px 8px', borderRadius: '12px', fontSize: '0.8rem'}}>Match: {m.matchScore} pts</span>
+                          </h3>
+                          <p style={{fontSize:'1rem', color: 'var(--secondary-color)', margin: '4px 0'}}>{m.headline || m.profession || 'Professional'}</p>
+                          <p style={{fontSize:'0.9rem', color: 'var(--text-secondary)', margin: '4px 0'}}>{m.residenceCity}{m.residenceCountry && `, ${m.residenceCountry}`} • Exp: {m.expectedSalary || 'Negotiable'}</p>
+                          {m.skills && m.skills.length > 0 && (
+                            <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem', flexWrap: 'wrap' }}>
+                              {m.skills.slice(0, 5).map((s: string) => <span key={s} style={{background: 'rgba(255,255,255,0.1)', padding: '2px 8px', borderRadius: '12px', fontSize: '0.8rem'}}>{s}</span>)}
+                              {m.skills.length > 5 && <span style={{background: 'rgba(255,255,255,0.1)', padding: '2px 8px', borderRadius: '12px', fontSize: '0.8rem'}}>+{m.skills.length - 5}</span>}
+                            </div>
+                          )}
+                        </div>
                       </div>
-                      <button className="btn-primary" style={{ padding: '8px 16px', fontSize: '0.9rem' }} onClick={() => handleInvite(m.user.id)}>Invite</button>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                        <button className="btn-primary" style={{ padding: '8px 24px', fontSize: '0.9rem' }} onClick={() => handleInvite(m.userId)}>Invite to Apply</button>
+                      </div>
                     </div>
                   ))}
                 </div>

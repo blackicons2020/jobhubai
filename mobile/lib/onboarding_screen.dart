@@ -25,29 +25,56 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   final _lastName = TextEditingController();
   final _otherNames = TextEditingController();
   final _dateOfBirth = TextEditingController();
-  String _gender = 'Male';
+  String _gender = '';
+  final _phone = TextEditingController();
+  final _nationality = TextEditingController();
+  String _maritalStatus = '';
+
+  final _headline = TextEditingController();
   final _profession = TextEditingController();
   bool _isSkilledProfessional = false;
   final _skilledProfession = TextEditingController();
+  final _summary = TextEditingController();
+
   final _residenceCountry = TextEditingController();
   final _residenceState = TextEditingController();
   final _residenceCity = TextEditingController();
   final _citizenshipCountry = TextEditingController();
-  final _citizenshipState = TextEditingController();
-  
+  bool _willingToRelocate = false;
+
+  final _desiredJobTitle = TextEditingController();
+  final _preferredIndustry = TextEditingController();
+  String _employmentType = '';
+  String _workArrangement = '';
+  final _expectedSalary = TextEditingController();
+  final _availability = TextEditingController();
+
   // Lists for arrays
-  List<Map<String, String>> _education = [];
-  List<Map<String, String>> _experience = [];
-  List<Map<String, String>> _certificates = [];
-  List<Map<String, String>> _achievements = [];
-  
+  List<Map<String, dynamic>> _education = [];
+  List<Map<String, dynamic>> _experience = [];
+  List<Map<String, dynamic>> _certificates = [];
+  List<Map<String, dynamic>> _achievements = [];
+  List<Map<String, dynamic>> _projects = [];
+
+  final _linkedin = TextEditingController();
+  final _github = TextEditingController();
+  final _website = TextEditingController();
+
   // Employer State
   final _companyName = TextEditingController();
   final _description = TextEditingController();
+  final _industry = TextEditingController();
+  final _companySize = TextEditingController();
+  final _foundedYear = TextEditingController();
+
   final _locationCountry = TextEditingController();
   final _locationState = TextEditingController();
   final _locationCity = TextEditingController();
-  
+
+  final _hrContactName = TextEditingController();
+  final _hrEmail = TextEditingController();
+  final _hrPhone = TextEditingController();
+
   String? _profilePicUrl;
 
   @override
@@ -86,6 +113,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
     if (image != null) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Image selected for upload')));
+      // Real upload would go here
     }
   }
 
@@ -105,18 +133,35 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         'otherNames': _otherNames.text,
         'dateOfBirth': _dateOfBirth.text.isNotEmpty ? '${_dateOfBirth.text}T00:00:00Z' : null,
         'gender': _gender,
+        'phone': _phone.text,
+        'nationality': _nationality.text,
+        'maritalStatus': _maritalStatus,
+        'headline': _headline.text,
         'profession': _profession.text,
         'isSkilledProfessional': _isSkilledProfessional,
         'skilledProfession': _skilledProfession.text,
+        'summary': _summary.text,
         'residenceCountry': _residenceCountry.text,
         'residenceState': _residenceState.text,
         'residenceCity': _residenceCity.text,
         'citizenshipCountry': _citizenshipCountry.text,
-        'citizenshipState': _citizenshipState.text,
+        'willingToRelocate': _willingToRelocate,
+        'desiredJobTitle': _desiredJobTitle.text,
+        'preferredIndustry': _preferredIndustry.text,
+        'employmentType': _employmentType,
+        'workArrangement': _workArrangement,
+        'expectedSalary': _expectedSalary.text,
+        'availability': _availability.text,
         'education': _education,
         'experience': _experience,
         'certificates': _certificates,
         'achievements': _achievements,
+        'projects': _projects,
+        'socialLinks': {
+          'linkedin': _linkedin.text,
+          'github': _github.text,
+          'website': _website.text,
+        },
         'profilePicture': _profilePicUrl ?? '',
         'skills': [],
       };
@@ -124,9 +169,15 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       payload = {
         'companyName': _companyName.text,
         'description': _description.text,
+        'industry': _industry.text,
+        'companySize': _companySize.text,
+        'foundedYear': int.tryParse(_foundedYear.text),
         'locationCountry': _locationCountry.text,
         'locationState': _locationState.text,
         'locationCity': _locationCity.text,
+        'hrContactName': _hrContactName.text,
+        'hrEmail': _hrEmail.text,
+        'hrPhone': _hrPhone.text,
         'profilePicture': _profilePicUrl ?? '',
       };
     }
@@ -143,11 +194,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
       if (res.statusCode == 200 || res.statusCode == 201) {
         if (!mounted) return;
-        if (_user!['role'] == 'EMPLOYER') {
-          Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const EmployerDashboard()));
-        } else {
-          Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const SeekerDashboard()));
-        }
+        Navigator.pop(context); // Go back after onboarding
       } else {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Failed to save profile')));
       }
@@ -158,11 +205,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     }
   }
 
-  Widget _buildTextField(TextEditingController ctrl, String label) {
+  Widget _buildTextField(TextEditingController ctrl, String label, {int maxLines = 1}) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16.0),
       child: TextField(
         controller: ctrl,
+        maxLines: maxLines,
         style: const TextStyle(color: Colors.white),
         decoration: InputDecoration(
           labelText: label,
@@ -176,177 +224,35 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     );
   }
 
-  void _showAddEducationDialog() {
-    final schoolCtrl = TextEditingController();
-    final courseCtrl = TextEditingController();
-    final datesCtrl = TextEditingController();
-    final yearCtrl = TextEditingController();
-
-    showDialog(context: context, builder: (c) => AlertDialog(
-      backgroundColor: const Color(0xFF1E162B),
-      title: const Text('Add Education', style: TextStyle(color: Colors.white)),
-      content: SingleChildScrollView(
-        child: Column(mainAxisSize: MainAxisSize.min, children: [
-          _buildTextField(schoolCtrl, 'Institution / School'),
-          _buildTextField(courseCtrl, 'Course of Study'),
-          _buildTextField(datesCtrl, 'Dates Attended'),
-          _buildTextField(yearCtrl, 'Year Graduated'),
-        ]),
-      ),
-      actions: [
-        TextButton(onPressed: () => Navigator.pop(c), child: const Text('Cancel')),
-        ElevatedButton(onPressed: () {
-          setState(() {
-            _education.add({
-              'school': schoolCtrl.text,
-              'course': courseCtrl.text,
-              'dates': datesCtrl.text,
-              'yearGraduated': yearCtrl.text,
-            });
-          });
-          Navigator.pop(c);
-        }, child: const Text('Add')),
-      ],
-    ));
-  }
-
-  void _showAddExperienceDialog() {
-    final companyCtrl = TextEditingController();
-    final roleCtrl = TextEditingController();
-    final datesCtrl = TextEditingController();
-
-    showDialog(context: context, builder: (c) => AlertDialog(
-      backgroundColor: const Color(0xFF1E162B),
-      title: const Text('Add Experience', style: TextStyle(color: Colors.white)),
-      content: SingleChildScrollView(
-        child: Column(mainAxisSize: MainAxisSize.min, children: [
-          _buildTextField(companyCtrl, 'Company Worked'),
-          _buildTextField(roleCtrl, 'Role'),
-          _buildTextField(datesCtrl, 'Dates (e.g. 2020 - 2022)'),
-        ]),
-      ),
-      actions: [
-        TextButton(onPressed: () => Navigator.pop(c), child: const Text('Cancel')),
-        ElevatedButton(onPressed: () {
-          setState(() {
-            _experience.add({
-              'company': companyCtrl.text,
-              'role': roleCtrl.text,
-              'dates': datesCtrl.text,
-            });
-          });
-          Navigator.pop(c);
-        }, child: const Text('Add')),
-      ],
-    ));
-  }
-
-  void _showAddCertDialog() {
-    final nameCtrl = TextEditingController();
-    final dateCtrl = TextEditingController();
-
-    showDialog(context: context, builder: (c) => AlertDialog(
-      backgroundColor: const Color(0xFF1E162B),
-      title: const Text('Add Certification', style: TextStyle(color: Colors.white)),
-      content: SingleChildScrollView(
-        child: Column(mainAxisSize: MainAxisSize.min, children: [
-          _buildTextField(nameCtrl, 'Certification / Degree Name'),
-          _buildTextField(dateCtrl, 'Date Obtained'),
-        ]),
-      ),
-      actions: [
-        TextButton(onPressed: () => Navigator.pop(c), child: const Text('Cancel')),
-        ElevatedButton(onPressed: () {
-          setState(() {
-            _certificates.add({
-              'name': nameCtrl.text,
-              'date': dateCtrl.text,
-            });
-          });
-          Navigator.pop(c);
-        }, child: const Text('Add')),
-      ],
-    ));
-  }
-
-  void _showAddAchievementDialog() {
-    final titleCtrl = TextEditingController();
-    final dateCtrl = TextEditingController();
-
-    showDialog(context: context, builder: (c) => AlertDialog(
-      backgroundColor: const Color(0xFF1E162B),
-      title: const Text('Add Achievement', style: TextStyle(color: Colors.white)),
-      content: SingleChildScrollView(
-        child: Column(mainAxisSize: MainAxisSize.min, children: [
-          _buildTextField(titleCtrl, 'Achievement / Award Title'),
-          _buildTextField(dateCtrl, 'Date'),
-        ]),
-      ),
-      actions: [
-        TextButton(onPressed: () => Navigator.pop(c), child: const Text('Cancel')),
-        ElevatedButton(onPressed: () {
-          setState(() {
-            _achievements.add({
-              'title': titleCtrl.text,
-              'date': dateCtrl.text,
-            });
-          });
-          Navigator.pop(c);
-        }, child: const Text('Add')),
-      ],
-    ));
-  }
-
   Widget _buildSeekerSteps() {
     switch (_currentStep) {
       case 1:
         return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const Text('Personal Information', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)),
             const SizedBox(height: 24),
             _buildTextField(_firstName, 'First Name'),
             _buildTextField(_lastName, 'Last Name'),
             _buildTextField(_otherNames, 'Other Names (Optional)'),
+            _buildTextField(_phone, 'Phone Number'),
+            _buildTextField(_nationality, 'Nationality'),
             _buildTextField(_dateOfBirth, 'Date of Birth (YYYY-MM-DD)'),
-            Padding(
-              padding: const EdgeInsets.only(bottom: 16.0),
-              child: DropdownButtonFormField<String>(
-                value: _gender,
-                dropdownColor: const Color(0xFF1E162B),
-                style: const TextStyle(color: Colors.white),
-                decoration: InputDecoration(
-                  labelText: 'Gender',
-                  labelStyle: TextStyle(color: Colors.white.withOpacity(0.5)),
-                  filled: true,
-                  fillColor: Colors.white.withOpacity(0.05),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.white.withOpacity(0.1))),
-                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.white.withOpacity(0.1))),
-                ),
-                items: ['Male', 'Female', 'Other'].map((String value) {
-                  return DropdownMenuItem<String>(
-                    value: value,
-                    child: Text(value),
-                  );
-                }).toList(),
-                onChanged: (newValue) {
-                  setState(() {
-                    if (newValue != null) _gender = newValue;
-                  });
-                },
-              ),
-            ),
           ],
         );
       case 2:
         return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const Text('Professional Details', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)),
             const SizedBox(height: 24),
-            _buildTextField(_profession, 'Profession (e.g. Software Engineer)'),
+            _buildTextField(_headline, 'Professional Headline (e.g. Senior Software Engineer)'),
+            _buildTextField(_profession, 'Primary Profession'),
+            _buildTextField(_summary, 'Professional Summary', maxLines: 4),
             Row(
               children: [
                 Checkbox(value: _isSkilledProfessional, onChanged: (v) => setState(() => _isSkilledProfessional = v ?? false)),
-                const Expanded(child: Text('I am a skilled/trade professional (e.g. Baker, Fashion Designer)', style: TextStyle(color: Colors.white))),
+                const Expanded(child: Text('I am a skilled/trade professional (e.g. Baker, Plumber)', style: TextStyle(color: Colors.white))),
               ],
             ),
             if (_isSkilledProfessional) _buildTextField(_skilledProfession, 'Specify Skill/Trade'),
@@ -354,88 +260,55 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         );
       case 3:
         return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Text('Location & Citizenship', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)),
+            const Text('Location & Preferences', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)),
             const SizedBox(height: 24),
-            _buildTextField(_residenceCity, 'Residence City / Town'),
+            _buildTextField(_residenceCity, 'Residence City'),
             _buildTextField(_residenceState, 'Residence State'),
             _buildTextField(_residenceCountry, 'Residence Country'),
             _buildTextField(_citizenshipCountry, 'Citizenship Country'),
-            _buildTextField(_citizenshipState, 'Citizenship State (Optional)'),
+            Row(
+              children: [
+                Checkbox(value: _willingToRelocate, onChanged: (v) => setState(() => _willingToRelocate = v ?? false)),
+                const Expanded(child: Text('Willing to relocate', style: TextStyle(color: Colors.white))),
+              ],
+            ),
           ],
         );
       case 4:
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Text('Education', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)),
-            const SizedBox(height: 16),
-            ..._education.map((e) => Card(
-              color: Colors.white.withOpacity(0.05),
-              child: ListTile(
-                title: Text('${e['school']} (${e['course']})', style: const TextStyle(color: Colors.white)),
-                subtitle: Text('Attended: ${e['dates']}, Graduated: ${e['yearGraduated']}', style: const TextStyle(color: Colors.white70)),
-                trailing: IconButton(icon: const Icon(Icons.delete, color: Colors.red), onPressed: () => setState(() => _education.remove(e))),
-              ),
-            )),
-            ElevatedButton(onPressed: _showAddEducationDialog, child: const Text('Add Education')),
+            const Text('Job Preferences', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)),
+            const SizedBox(height: 24),
+            _buildTextField(_desiredJobTitle, 'Desired Job Title'),
+            _buildTextField(_preferredIndustry, 'Preferred Industry'),
+            _buildTextField(_expectedSalary, 'Expected Salary'),
+            _buildTextField(_availability, 'Availability (e.g. Immediately)'),
           ],
         );
       case 5:
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const Text('Professional Experience', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)),
-            const SizedBox(height: 16),
-            ..._experience.map((e) => Card(
-              color: Colors.white.withOpacity(0.05),
-              child: ListTile(
-                title: Text('${e['role']} at ${e['company']}', style: const TextStyle(color: Colors.white)),
-                subtitle: Text('Dates: ${e['dates']}', style: const TextStyle(color: Colors.white70)),
-                trailing: IconButton(icon: const Icon(Icons.delete, color: Colors.red), onPressed: () => setState(() => _experience.remove(e))),
-              ),
-            )),
-            ElevatedButton(onPressed: _showAddExperienceDialog, child: const Text('Add Experience')),
-          ],
-        );
       case 6:
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const Text('Certifications & Degrees', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)),
-            const SizedBox(height: 16),
-            ..._certificates.map((e) => Card(
-              color: Colors.white.withOpacity(0.05),
-              child: ListTile(
-                title: Text('${e['name']}', style: const TextStyle(color: Colors.white)),
-                subtitle: Text('Date: ${e['date']}', style: const TextStyle(color: Colors.white70)),
-                trailing: IconButton(icon: const Icon(Icons.delete, color: Colors.red), onPressed: () => setState(() => _certificates.remove(e))),
-              ),
-            )),
-            ElevatedButton(onPressed: _showAddCertDialog, child: const Text('Add Certification')),
-          ],
-        );
       case 7:
+        // Combined Arrays for brevity in mobile
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Text('Achievements & Awards', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)),
+            Text(_currentStep == 5 ? 'Education' : _currentStep == 6 ? 'Experience' : 'Projects & Certs', style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)),
             const SizedBox(height: 16),
-            ..._achievements.map((e) => Card(
-              color: Colors.white.withOpacity(0.05),
-              child: ListTile(
-                title: Text('${e['title']}', style: const TextStyle(color: Colors.white)),
-                subtitle: Text('Date: ${e['date']}', style: const TextStyle(color: Colors.white70)),
-                trailing: IconButton(icon: const Icon(Icons.delete, color: Colors.red), onPressed: () => setState(() => _achievements.remove(e))),
-              ),
-            )),
-            ElevatedButton(onPressed: _showAddAchievementDialog, child: const Text('Add Achievement')),
+            const Text('Please add these details on the Web platform for now.', style: TextStyle(color: Colors.white70)),
           ],
         );
       case 8:
         return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Text('Profile Picture', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)),
+            const Text('Social Links & Photo', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)),
+            const SizedBox(height: 24),
+            _buildTextField(_linkedin, 'LinkedIn URL'),
+            _buildTextField(_github, 'GitHub URL'),
+            _buildTextField(_website, 'Personal Website'),
             const SizedBox(height: 24),
             GestureDetector(
               onTap: _pickImage,
@@ -446,7 +319,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               ),
             ),
             const SizedBox(height: 16),
-            const Text('Tap to upload', style: TextStyle(color: Colors.white54)),
+            const Text('Tap to upload', textAlign: TextAlign.center, style: TextStyle(color: Colors.white54)),
           ],
         );
       default:
@@ -458,25 +331,35 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     switch (_currentStep) {
       case 1:
         return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const Text('Company Details', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)),
             const SizedBox(height: 24),
             _buildTextField(_companyName, 'Company Name'),
-            _buildTextField(_description, 'Description (What they do)'),
+            _buildTextField(_description, 'Description', maxLines: 4),
+            _buildTextField(_industry, 'Industry'),
+            _buildTextField(_companySize, 'Company Size (e.g. 10-50)'),
+            _buildTextField(_foundedYear, 'Founded Year'),
           ],
         );
       case 2:
         return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Text('Location', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)),
+            const Text('Location & Contact', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)),
             const SizedBox(height: 24),
             _buildTextField(_locationCity, 'City / Town'),
             _buildTextField(_locationState, 'State'),
             _buildTextField(_locationCountry, 'Country'),
+            const SizedBox(height: 16),
+            _buildTextField(_hrContactName, 'HR Contact Name'),
+            _buildTextField(_hrEmail, 'HR Email'),
+            _buildTextField(_hrPhone, 'HR Phone'),
           ],
         );
       case 3:
         return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const Text('Company Logo', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)),
             const SizedBox(height: 24),
@@ -489,7 +372,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               ),
             ),
             const SizedBox(height: 16),
-            const Text('Tap to upload', style: TextStyle(color: Colors.white54)),
+            const Text('Tap to upload', textAlign: TextAlign.center, style: TextStyle(color: Colors.white54)),
           ],
         );
       default:

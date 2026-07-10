@@ -59,6 +59,9 @@ export class JobsService {
         const profileTextElements = [
           profile.profession,
           profile.skilledProfession,
+          profile.headline,
+          profile.summary,
+          profile.desiredJobTitle,
           profile.bio,
           profile.resumeContent,
           experienceRoles,
@@ -150,7 +153,29 @@ export class JobsService {
     });
 
     const scored = profiles.map(profile => {
-      const profileText = ([...profile.skills, profile.bio, profile.resumeContent].join(' ')).toLowerCase();
+      const experienceArray = profile.experience as any[] || [];
+      const educationArray = profile.education as any[] || [];
+      const certsArray = profile.certificates as any[] || [];
+
+      const experienceRoles = experienceArray.map(e => e.role).join(' ');
+      const educationCourses = educationArray.map(e => e.course).join(' ');
+      const certNames = certsArray.map(c => c.name).join(' ');
+
+      const profileTextElements = [
+        profile.profession,
+        profile.skilledProfession,
+        profile.headline,
+        profile.summary,
+        profile.desiredJobTitle,
+        profile.bio,
+        profile.resumeContent,
+        experienceRoles,
+        educationCourses,
+        certNames,
+        ...profile.skills
+      ].filter(Boolean).join(' ');
+
+      const profileText = profileTextElements.toLowerCase();
       let score = 0;
       for (const word of jobWords) {
         if (profileText.includes(word)) score++;

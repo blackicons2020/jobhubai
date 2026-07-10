@@ -16,6 +16,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   bool _isLoading = true;
   Map<String, dynamic>? _user;
   Map<String, dynamic>? _profile;
+  int _completion = 0;
 
   @override
   void initState() {
@@ -49,11 +50,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
           setState(() {
             _user = userData;
             _profile = jsonDecode(profRes.body);
-            _isLoading = false;
           });
+        }
+        
+        if (role == 'JOB_SEEKER') {
+          final compRes = await http.get(
+            Uri.parse('http://13.60.192.118:3001/profiles/job-seeker/completion'),
+            headers: {'Authorization': 'Bearer $token'},
+          );
+          if (compRes.statusCode == 200) {
+            setState(() {
+              _completion = jsonDecode(compRes.body)['completion'] ?? 0;
+            });
+          }
         }
       }
     } catch (e) {
+      debugPrint(e.toString());
+    } finally {
       setState(() => _isLoading = false);
     }
   }
@@ -70,24 +84,36 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget _buildSeekerProfile() {
     final name = '${_profile?['firstName'] ?? ''} ${_profile?['lastName'] ?? ''}'.trim();
     final location = '${_profile?['residenceCity'] ?? ''} ${_profile?['residenceCountry'] ?? ''}'.trim();
-    final profession = _profile?['profession'] ?? 'Job Seeker';
+    final profession = _profile?['headline'] ?? _profile?['profession'] ?? 'Job Seeker';
     final picUrl = _profile?['profilePicture'];
-    final isSkilled = _profile?['isSkilledProfessional'] == true;
+    final isVerified = _profile?['verificationStatus'] == 'VERIFIED';
     
     final education = _profile?['education'] as List<dynamic>? ?? [];
     final experience = _profile?['experience'] as List<dynamic>? ?? [];
-    final certificates = _profile?['certificates'] as List<dynamic>? ?? [];
-    final achievements = _profile?['achievements'] as List<dynamic>? ?? [];
+    final projects = _profile?['projects'] as List<dynamic>? ?? [];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Center(
-          child: CircleAvatar(
-            radius: 60,
-            backgroundColor: Colors.white.withOpacity(0.1),
-            backgroundImage: (picUrl != null && picUrl.isNotEmpty) ? NetworkImage(picUrl) : null,
-            child: (picUrl == null || picUrl.isEmpty) ? const Icon(Icons.person, size: 60, color: Colors.white) : null,
+          child: Stack(
+            children: [
+              CircleAvatar(
+                radius: 60,
+                backgroundColor: Colors.white.withOpacity(0.1),
+                backgroundImage: (picUrl != null && picUrl.isNotEmpty) ? NetworkImage(picUrl) : null,
+                child: (picUrl == null || picUrl.isEmpty) ? const Icon(Icons.person, size: 60, color: Colors.white) : null,
+              ),
+              if (isVerified)
+                Positioned(
+                  bottom: 0,
+                  right: 0,
+                  child: Container(
+                    decoration: const BoxDecoration(shape: BoxShape.circle, color: Color(0xFF120B1C)),
+                    child: const Icon(Icons.verified, color: Color(0xFF00F0FF), size: 30),
+                  ),
+                ),
+            ],
           ),
         ),
         const SizedBox(height: 16),
@@ -95,52 +121,79 @@ class _ProfileScreenState extends State<ProfileScreen> {
         Text(profession, style: const TextStyle(fontSize: 18, color: Color(0xFF00F0FF)), textAlign: TextAlign.center),
         if (location.isNotEmpty)
           Text(location, style: TextStyle(fontSize: 14, color: Colors.white.withOpacity(0.7)), textAlign: TextAlign.center),
-        if (isSkilled)
-          Text('Skilled Professional: ${_profile?['skilledProfession'] ?? 'Yes'}', style: const TextStyle(fontSize: 14, color: Colors.orangeAccent), textAlign: TextAlign.center),
         
-        const SizedBox(height: 32),
-        ElevatedButton.icon(
-          onPressed: () {
-            Navigator.push(context, MaterialPageRoute(builder: (context) => const OnboardingScreen())).then((_) => _fetchData());
-          },
-          icon: const Icon(Icons.edit, color: Colors.white),
-          label: const Text('Edit Profile', style: TextStyle(color: Colors.white)),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFF6366F1),
-            padding: const EdgeInsets.symmetric(vertical: 12),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        const SizedBox(height: 16),
+        Center(
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            decoration: BoxDecoration(color: const Color(0xFF00F0FF).withOpacity(0.1), borderRadius: BorderRadius.circular(20)),
+            child: Text('★★★★☆ Profile Strength ($_completion%)', style: const TextStyle(color: Color(0xFF00F0FF), fontWeight: FontWeight.bold)),
           ),
         ),
         
         const SizedBox(height: 32),
-        _buildSectionTitle('Personal Details'),
-        _buildInfoRow('Gender', _profile?['gender'] ?? 'Not specified'),
-        if (_profile?['dateOfBirth'] != null)
-          _buildInfoRow('Date of Birth', (_profile?['dateOfBirth'] as String).split('T')[0]),
-        _buildInfoRow('Citizenship', _profile?['citizenshipCountry'] ?? 'Not specified'),
-
-        if (education.isNotEmpty) ...[
-          const SizedBox(height: 24),
-          _buildSectionTitle('Education'),
-          ...education.map((e) => _buildCardItem(e['school'], e['course'], 'Dates: ${e['dates']} • Grad: ${e['yearGraduated']}')),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Expanded(
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  Navigator.push(context, MaterialPageRoute(builder: (context) => const OnboardingScreen())).then((_) => _fetchData());
+                },
+                icon: const Icon(Icons.edit, color: Colors.black),
+                label: const Text('Edit Profile', style: TextStyle(color: Colors.black)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF00F0FF),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: () {},
+                icon: const Icon(Icons.download, color: Colors.white),
+                label: const Text('CV', style: TextStyle(color: Colors.white)),
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  side: const BorderSide(color: Colors.white),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+            ),
+          ],
+        ),
+        
+        if (_profile?['summary'] != null && _profile!['summary'].toString().isNotEmpty) ...[
+          const SizedBox(height: 32),
+          _buildSectionTitle('About Me'),
+          Text(_profile!['summary'], style: TextStyle(color: Colors.white.withOpacity(0.8), height: 1.5)),
         ],
+
+        const SizedBox(height: 32),
+        _buildSectionTitle('Job Preferences'),
+        _buildInfoRow('Desired Title', _profile?['desiredJobTitle'] ?? 'Any'),
+        _buildInfoRow('Employment Type', _profile?['employmentType'] ?? 'Any'),
+        _buildInfoRow('Work Setup', _profile?['workArrangement'] ?? 'Any'),
+        _buildInfoRow('Salary', _profile?['expectedSalary'] ?? 'Negotiable'),
 
         if (experience.isNotEmpty) ...[
           const SizedBox(height: 24),
           _buildSectionTitle('Experience'),
-          ...experience.map((e) => _buildCardItem(e['company'], e['role'], 'Dates: ${e['dates']}')),
+          ...experience.map((e) => _buildCardItem(e['role'], e['company'], 'Dates: ${e['dates']}')),
         ],
 
-        if (certificates.isNotEmpty) ...[
+        if (education.isNotEmpty) ...[
           const SizedBox(height: 24),
-          _buildSectionTitle('Certifications'),
-          ...certificates.map((e) => _buildCardItem(e['name'], null, 'Date: ${e['date']}')),
+          _buildSectionTitle('Education'),
+          ...education.map((e) => _buildCardItem(e['school'], e['course'], 'Dates: ${e['dates'] ?? e['yearGraduated']}')),
         ],
 
-        if (achievements.isNotEmpty) ...[
+        if (projects.isNotEmpty) ...[
           const SizedBox(height: 24),
-          _buildSectionTitle('Achievements & Awards'),
-          ...achievements.map((e) => _buildCardItem(e['title'], null, 'Date: ${e['date']}')),
+          _buildSectionTitle('Projects'),
+          ...projects.map((e) => _buildCardItem(e['title'], e['description'], e['liveLink'])),
         ],
       ],
     );
@@ -150,14 +203,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Card(
       color: Colors.white.withOpacity(0.05),
       margin: const EdgeInsets.only(bottom: 8.0),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12), side: BorderSide(color: Colors.white.withOpacity(0.1))),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             if (title != null) Text(title, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
-            if (subtitle1 != null) ...[const SizedBox(height: 4), Text(subtitle1, style: const TextStyle(color: Colors.white, fontSize: 14))],
-            if (subtitle2 != null) ...[const SizedBox(height: 4), Text(subtitle2, style: const TextStyle(color: Colors.white70, fontSize: 14))],
+            if (subtitle1 != null && subtitle1.isNotEmpty) ...[const SizedBox(height: 4), Text(subtitle1, style: const TextStyle(color: Color(0xFF00F0FF), fontSize: 14))],
+            if (subtitle2 != null && subtitle2.isNotEmpty) ...[const SizedBox(height: 8), Text(subtitle2, style: const TextStyle(color: Colors.white70, fontSize: 14))],
           ],
         ),
       ),
@@ -168,16 +222,30 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final name = _profile?['companyName'] ?? 'Employer';
     final location = '${_profile?['locationCity'] ?? ''} ${_profile?['locationCountry'] ?? ''}'.trim();
     final picUrl = _profile?['profilePicture'];
+    final isVerified = _profile?['verificationStatus'] == 'VERIFIED';
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Center(
-          child: CircleAvatar(
-            radius: 60,
-            backgroundColor: Colors.white.withOpacity(0.1),
-            backgroundImage: (picUrl != null && picUrl.isNotEmpty) ? NetworkImage(picUrl) : null,
-            child: (picUrl == null || picUrl.isEmpty) ? const Icon(Icons.business, size: 60, color: Colors.white) : null,
+          child: Stack(
+            children: [
+              CircleAvatar(
+                radius: 60,
+                backgroundColor: Colors.white.withOpacity(0.1),
+                backgroundImage: (picUrl != null && picUrl.isNotEmpty) ? NetworkImage(picUrl) : null,
+                child: (picUrl == null || picUrl.isEmpty) ? const Icon(Icons.business, size: 60, color: Colors.white) : null,
+              ),
+              if (isVerified)
+                Positioned(
+                  bottom: 0,
+                  right: 0,
+                  child: Container(
+                    decoration: const BoxDecoration(shape: BoxShape.circle, color: Color(0xFF120B1C)),
+                    child: const Icon(Icons.verified, color: Color(0xFF00F0FF), size: 30),
+                  ),
+                ),
+            ],
           ),
         ),
         const SizedBox(height: 16),
@@ -190,10 +258,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
           onPressed: () {
             Navigator.push(context, MaterialPageRoute(builder: (context) => const OnboardingScreen())).then((_) => _fetchData());
           },
-          icon: const Icon(Icons.edit, color: Colors.white),
-          label: const Text('Edit Profile', style: TextStyle(color: Colors.white)),
+          icon: const Icon(Icons.edit, color: Colors.black),
+          label: const Text('Edit Company Profile', style: TextStyle(color: Colors.black)),
           style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFF6366F1),
+            backgroundColor: const Color(0xFF00F0FF),
             padding: const EdgeInsets.symmetric(vertical: 12),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           ),
@@ -202,6 +270,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
         const SizedBox(height: 32),
         _buildSectionTitle('About the Company'),
         Text(_profile?['description'] ?? 'No description provided.', style: TextStyle(color: Colors.white.withOpacity(0.8), height: 1.5)),
+
+        const SizedBox(height: 32),
+        _buildSectionTitle('Company Details'),
+        _buildInfoRow('Industry', _profile?['industry'] ?? 'N/A'),
+        _buildInfoRow('Company Size', _profile?['companySize'] ?? 'N/A'),
+        _buildInfoRow('Founded Year', _profile?['foundedYear']?.toString() ?? 'N/A'),
+
+        const SizedBox(height: 32),
+        _buildSectionTitle('Contact HR'),
+        _buildInfoRow('Name', _profile?['hrContactName'] ?? 'N/A'),
+        _buildInfoRow('Email', _profile?['hrEmail'] ?? 'N/A'),
+        _buildInfoRow('Phone', _profile?['hrPhone'] ?? 'N/A'),
       ],
     );
   }
