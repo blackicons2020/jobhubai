@@ -241,7 +241,9 @@ export default function JobsFeedPage() {
                 <div>
                   <h2 style={{ fontSize: '1.5rem', margin: '0 0 0.5rem 0' }}>{job.title}</h2>
                   <div style={{ display: 'flex', gap: '1rem', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
-                    <span>🏢 {job.employer?.companyName || 'Unknown Company'}</span>
+                    <span>
+                      🏢 <Link href={`/company/${job.employerId}`} style={{ color: '#00f0ff', textDecoration: 'none' }}>{job.employer?.companyName || 'Unknown Company'}</Link>
+                    </span>
                     <span>📍 {job.location || 'Anywhere'} {job.isRemote && '(Remote)'}</span>
                     <span>💰 {job.salary || 'Competitive'}</span>
                   </div>

@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'create_job_screen.dart';
 import 'login_screen.dart';
 import 'profile_screen.dart';
+import 'company_profile_screen.dart';
 
 class JobsScreen extends StatefulWidget {
   const JobsScreen({super.key});
@@ -311,7 +312,19 @@ class _JobsScreenState extends State<JobsScreen> {
                               spacing: 12,
                               runSpacing: 8,
                               children: [
-                                _buildBadge(Icons.business, job['employer']?['companyName'] ?? 'Unknown'),
+                                GestureDetector(
+                                  onTap: () {
+                                    if (job['employerId'] != null) {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => CompanyProfileScreen(employerId: job['employerId']),
+                                        ),
+                                      );
+                                    }
+                                  },
+                                  child: _buildBadge(Icons.business, job['employer']?['companyName'] ?? 'Unknown', isLink: true),
+                                ),
                                 _buildBadge(Icons.location_on, '${job['location'] ?? 'Anywhere'} ${(job['isRemote'] ?? false) ? '(Remote)' : ''}'),
                                 _buildBadge(Icons.attach_money, job['salary'] ?? 'Competitive'),
                               ],
@@ -393,17 +406,18 @@ class _JobsScreenState extends State<JobsScreen> {
     );
   }
 
-  Widget _buildBadge(IconData icon, String text) {
+  Widget _buildBadge(IconData icon, String text, {bool isLink = false}) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, size: 16, color: Colors.white.withOpacity(0.5)),
+        Icon(icon, size: 16, color: isLink ? Colors.blueAccent : Colors.white.withOpacity(0.5)),
         const SizedBox(width: 4),
         Text(
           text,
           style: TextStyle(
             fontSize: 14,
-            color: Colors.white.withOpacity(0.7),
+            color: isLink ? Colors.blueAccent : Colors.white.withOpacity(0.7),
+            decoration: isLink ? TextDecoration.underline : TextDecoration.none,
           ),
         ),
       ],
