@@ -111,6 +111,9 @@ export default function CompanyPublicPage() {
           <p style={{ margin: '0.5rem 0', color: 'var(--text-secondary)' }}><strong>Size:</strong> {company.companySize || 'N/A'}</p>
           <p style={{ margin: '0.5rem 0', color: 'var(--text-secondary)' }}><strong>Founded:</strong> {company.foundedYear || 'N/A'}</p>
           <p style={{ margin: '0.5rem 0', color: 'var(--text-secondary)' }}><strong>Views:</strong> {company.profileViews || 0}</p>
+          {company.responseTimeRating && (
+            <p style={{ margin: '0.5rem 0', color: 'var(--text-secondary)' }}><strong>Avg Response Time:</strong> {company.responseTimeRating} hrs</p>
+          )}
         </div>
 
         {company.coreValues && (
@@ -121,6 +124,34 @@ export default function CompanyPublicPage() {
                 <li key={i}>{v}</li>
               ))}
             </ul>
+          </div>
+        )}
+
+        {company.companyVideos && company.companyVideos.length > 0 && (
+          <div className="glass-panel" style={{ padding: '1.5rem' }}>
+            <h3 style={{ margin: '0 0 1rem 0', color: 'var(--primary-color)' }}>Office Tour</h3>
+            <div style={{ position: 'relative', paddingTop: '56.25%', borderRadius: '8px', overflow: 'hidden' }}>
+              <iframe 
+                src={company.companyVideos[0]} 
+                style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 0 }} 
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                allowFullScreen
+              />
+            </div>
+          </div>
+        )}
+
+        {company.testimonials && company.testimonials.length > 0 && (
+          <div className="glass-panel" style={{ padding: '1.5rem' }}>
+            <h3 style={{ margin: '0 0 1rem 0', color: 'var(--primary-color)' }}>Employee Testimonials</h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              {(company.testimonials as any[]).map((t, i) => (
+                <div key={i} style={{ background: 'rgba(255,255,255,0.05)', padding: '1rem', borderRadius: '8px', fontStyle: 'italic' }}>
+                  <p style={{ margin: '0 0 0.5rem 0', color: 'var(--text-secondary)' }}>"{t.content}"</p>
+                  <p style={{ margin: 0, color: 'var(--primary-color)', fontSize: '0.9rem', fontWeight: 'bold' }}>- {t.author}, {t.role}</p>
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </div>

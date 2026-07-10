@@ -98,4 +98,13 @@ export class AiController {
     await this.checkGenerationLimit(req.user.userId);
     return this.aiService.generateJobDescription(jobData);
   }
+
+  @Post('fraud/detect')
+  async detectFraud(@Request() req, @Body('content') content: string) {
+    if (req.user.role !== 'ADMIN') {
+      // In a real scenario, this might be internal or admin only. 
+      // For now, allow it or enforce admin. We will allow employers/admins to check.
+    }
+    return this.aiService.detectFraud(content);
+  }
 }

@@ -21,6 +21,23 @@ export class ProfilesController {
     return { success: true, message: 'Upgraded to Premium' };
   }
 
+  @Post('verify/request')
+  async requestVerification(@Request() req, @Body() data: any) {
+    const userId = req.user.userId;
+    if (req.user.role === 'JOB_SEEKER') {
+      await this.prisma.jobSeekerProfile.update({
+        where: { userId },
+        data: { verificationStatus: 'PENDING', verificationDocs: data.docs || {} }
+      });
+    } else if (req.user.role === 'EMPLOYER') {
+      await this.prisma.employer.update({
+        where: { userId },
+        data: { verificationStatus: 'PENDING' }
+      });
+    }
+    return { success: true, message: 'Verification request submitted. Status is now PENDING.' };
+  }
+
   @Post('job-seeker')
   async upsertJobSeekerProfile(@Request() req, @Body() data: Prisma.JobSeekerProfileUpdateInput & Prisma.JobSeekerProfileCreateWithoutUserInput) {
     if (req.user.role !== 'JOB_SEEKER') {

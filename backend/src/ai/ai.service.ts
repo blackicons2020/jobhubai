@@ -113,4 +113,13 @@ export class AiService {
       throw new HttpException('Failed to generate job description', HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
+
+  async detectFraud(content: string): Promise<any> {
+    try {
+      const response = await lastValueFrom(this.httpService.post(`${this.fastApiUrl}/fraud/detect`, { content }));
+      return response.data;
+    } catch (error) {
+      throw new HttpException('Failed to detect fraud via AI service', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
 }

@@ -22,6 +22,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Map<String, dynamic>? _aiScore;
   Map<String, dynamic>? _aiSalary;
   List<dynamic>? _aiSuggestions;
+  
+  bool _isVerifying = false;
 
   @override
   void initState() {
@@ -122,6 +124,35 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
+  Future<void> _requestVerification() async {
+    setState(() => _isVerifying = true);
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token');
+      
+      final res = await http.post(
+        Uri.parse('http://13.60.192.118:3001/profiles/verify/request'),
+        headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer $token'},
+        body: jsonEncode({'docs': {'type': 'ID_CARD'}}),
+      );
+      
+      if (res.statusCode == 200 || res.statusCode == 201) {
+        setState(() {
+          _profile?['verificationStatus'] = 'PENDING';
+        });
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Verification requested successfully!')),
+          );
+        }
+      }
+    } catch (e) {
+      debugPrint(e.toString());
+    } finally {
+      setState(() => _isVerifying = false);
+    }
+  }
+
   Future<void> _logout() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('token');
@@ -172,6 +203,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
         if (location.isNotEmpty)
           Text(location, style: TextStyle(fontSize: 14, color: Colors.white.withOpacity(0.7)), textAlign: TextAlign.center),
         
+        if (_profile?['verificationStatus'] == 'UNVERIFIED')
+          Center(
+            child: TextButton(
+              onPressed: _isVerifying ? null : _requestVerification,
+              child: Text(_isVerifying ? 'Requesting...' : 'Request Verification', style: const TextStyle(color: Color(0xFF00F0FF))),
+            ),
+          )
+        else if (_profile?['verificationStatus'] == 'PENDING')
+          const Center(
+            child: Padding(
+              padding: EdgeInsets.only(top: 8.0),
+              child: Text('Verification Pending...', style: TextStyle(color: Colors.amber)),
+            ),
+          ),
+          
         const SizedBox(height: 16),
         Center(
           child: Container(
@@ -386,6 +432,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
         if (location.isNotEmpty)
           Text(location, style: TextStyle(fontSize: 14, color: Colors.white.withOpacity(0.7)), textAlign: TextAlign.center),
         
+        if (_profile?['verificationStatus'] == 'UNVERIFIED')
+          Center(
+            child: TextButton(
+              onPressed: _isVerifying ? null : _requestVerification,
+              child: Text(_isVerifying ? 'Requesting...' : 'Request Verification', style: const TextStyle(color: Color(0xFF00F0FF))),
+            ),
+          )
+        else if (_profile?['verificationStatus'] == 'PENDING')
+          const Center(
+            child: Padding(
+              padding: EdgeInsets.only(top: 8.0),
+              child: Text('Verification Pending...', style: TextStyle(color: Colors.amber)),
+            ),
+          ),
+          
         const SizedBox(height: 32),
         ElevatedButton.icon(
           onPressed: () {

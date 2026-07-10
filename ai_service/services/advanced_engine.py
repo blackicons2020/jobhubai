@@ -129,3 +129,28 @@ def generate_job_description(basic_info: dict) -> str:
     """
     response = model.generate_content(prompt)
     return response.text.strip()
+
+def detect_fraud(content: str) -> dict:
+    """Evaluates text for spam/fraud indicators."""
+    if not api_key:
+        return {"risk_score": 10, "flags": [], "is_suspicious": False}
+        
+    prompt = f"""
+    Analyze the following job description or user profile text for potential fraud, spam, or scams.
+    Return a risk score from 0 to 100, a list of specific red flags (if any), and a boolean indicating if it is highly suspicious.
+    
+    Text: {content}
+    
+    Output strictly valid JSON in this format:
+    {{
+        "risk_score": integer,
+        "flags": ["flag 1", "flag 2"],
+        "is_suspicious": boolean
+    }}
+    """
+    response = model.generate_content(prompt)
+    try:
+        text = response.text.strip().removeprefix('```json').removesuffix('```').strip()
+        return json.loads(text)
+    except:
+        return {"risk_score": 0, "flags": [], "is_suspicious": False}

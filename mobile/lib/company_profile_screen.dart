@@ -149,6 +149,48 @@ class _CompanyProfileScreenState extends State<CompanyProfileScreen> {
                     ],
                   ),
                   
+                  if (_company!['responseTimeRating'] != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 16.0),
+                      child: _buildInfoChip(Icons.timer, 'Avg Response Time: ${_company!['responseTimeRating']} hrs'),
+                    ),
+
+                  if (_company!['companyVideos'] != null && (_company!['companyVideos'] as List).isNotEmpty) ...[
+                    const SizedBox(height: 32),
+                    const Text('Office Tour', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 16),
+                    Container(
+                      height: 200,
+                      decoration: BoxDecoration(
+                        color: Colors.grey[900],
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Center(child: Icon(Icons.play_circle_fill, size: 64, color: Colors.blue)),
+                    ),
+                  ],
+
+                  if (_company!['testimonials'] != null && (_company!['testimonials'] as List).isNotEmpty) ...[
+                    const SizedBox(height: 32),
+                    const Text('Employee Testimonials', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 16),
+                    ...(_company!['testimonials'] as List).map((t) => Card(
+                      color: Colors.grey[900],
+                      margin: const EdgeInsets.only(bottom: 12),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('"${t['content']}"', style: const TextStyle(fontStyle: FontStyle.italic, color: Colors.grey)),
+                            const SizedBox(height: 8),
+                            Text('- ${t['author']}, ${t['role']}', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.blue)),
+                          ],
+                        ),
+                      ),
+                    )).toList(),
+                  ],
+                  
                   const SizedBox(height: 32),
                   const Text('Open Positions', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 16),

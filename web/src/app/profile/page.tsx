@@ -9,6 +9,7 @@ export default function ProfilePage() {
   const [profile, setProfile] = useState<any>(null);
   const [completion, setCompletion] = useState<number>(0);
   const [loading, setLoading] = useState(true);
+  const [verifying, setVerifying] = useState(false);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -54,6 +55,29 @@ export default function ProfilePage() {
     fetchProfile();
   }, [router]);
 
+  const handleRequestVerification = async () => {
+    setVerifying(true);
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch('http://13.60.192.118:3001/profiles/verify/request', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ docs: { type: 'ID_CARD' } })
+      });
+      if (res.ok) {
+        setProfile((prev: any) => ({ ...prev, verificationStatus: 'PENDING' }));
+        alert('Verification requested successfully!');
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setVerifying(false);
+    }
+  };
+
   if (loading) return <div style={{ display: 'flex', justifyContent: 'center', marginTop: '5rem' }}>Loading...</div>;
   if (!profile) return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '5rem' }}>
@@ -92,6 +116,19 @@ export default function ProfilePage() {
                     <p style={{ fontSize: '1.2rem', margin: '0.5rem 0' }}>{profile.headline || profile.profession || 'Job Seeker'} {profile.isSkilledProfessional && `(${profile.skilledProfession})`}</p>
                     <p style={{ margin: 0, color: 'var(--text-secondary)' }}>{profile.residenceCity}{profile.residenceState && `, ${profile.residenceState}`} {profile.residenceCountry && `- ${profile.residenceCountry}`}</p>
                     
+                    {profile.verificationStatus === 'UNVERIFIED' && (
+                      <button 
+                        onClick={handleRequestVerification} 
+                        disabled={verifying}
+                        style={{ marginTop: '0.5rem', background: 'transparent', border: '1px solid #00f0ff', color: '#00f0ff', padding: '4px 12px', borderRadius: '12px', cursor: 'pointer', fontSize: '0.9rem' }}
+                      >
+                        {verifying ? 'Requesting...' : 'Request Verification'}
+                      </button>
+                    )}
+                    {profile.verificationStatus === 'PENDING' && (
+                      <div style={{ marginTop: '0.5rem', color: '#ffd700', fontSize: '0.9rem' }}>Verification Pending...</div>
+                    )}
+
                     <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginTop: '1rem' }}>
                       <div style={{ background: 'rgba(0, 240, 255, 0.1)', padding: '0.2rem 0.8rem', borderRadius: '20px', color: '#00f0ff', fontSize: '0.9rem', fontWeight: 'bold' }}>
                         ★★★★☆ Profile Strength ({completion}%)
@@ -106,6 +143,19 @@ export default function ProfilePage() {
                     </h1>
                     <p style={{ fontSize: '1.2rem', margin: '0.5rem 0', color: 'var(--secondary-color)' }}>{profile.industry || 'Employer'}</p>
                     <p style={{ margin: 0, color: 'var(--text-secondary)' }}>{profile.locationCity}{profile.locationState && `, ${profile.locationState}`} {profile.locationCountry && `- ${profile.locationCountry}`}</p>
+
+                    {profile.verificationStatus === 'UNVERIFIED' && (
+                      <button 
+                        onClick={handleRequestVerification} 
+                        disabled={verifying}
+                        style={{ marginTop: '0.5rem', background: 'transparent', border: '1px solid #00f0ff', color: '#00f0ff', padding: '4px 12px', borderRadius: '12px', cursor: 'pointer', fontSize: '0.9rem' }}
+                      >
+                        {verifying ? 'Requesting...' : 'Request Verification'}
+                      </button>
+                    )}
+                    {profile.verificationStatus === 'PENDING' && (
+                      <div style={{ marginTop: '0.5rem', color: '#ffd700', fontSize: '0.9rem' }}>Verification Pending...</div>
+                    )}
                   </>
                 )}
               </div>

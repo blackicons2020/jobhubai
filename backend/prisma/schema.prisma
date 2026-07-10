@@ -143,6 +143,10 @@ model Employer {
   companyPhotos      Json?
   companyVideos      Json?
   
+  // Phase 2 Additions: Employer Branding
+  testimonials       Json?
+  responseTimeRating Float?
+  
   // Phase 1 Additions: Settings & Stats
   verificationStatus String?  @default("UNVERIFIED")
   profileViews       Int      @default(0)

@@ -70,7 +70,7 @@ def api_generate_embedding(req: EmbeddingRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-from services.advanced_engine import score_profile, skill_gap_analysis, estimate_salary, career_suggestions, generate_interview_questions, generate_job_description
+from services.advanced_engine import score_profile, skill_gap_analysis, estimate_salary, career_suggestions, generate_interview_questions, generate_job_description, detect_fraud
 
 @app.post("/ai/profile/score")
 def api_profile_score(req: dict):
@@ -111,6 +111,16 @@ def api_interview_questions(req: dict):
 def api_generate_job_description(req: dict):
     try:
         return {"description": generate_job_description(req)}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+class FraudRequest(BaseModel):
+    content: str
+
+@app.post("/ai/fraud/detect")
+def api_fraud_detect(req: FraudRequest):
+    try:
+        return detect_fraud(req.content)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
