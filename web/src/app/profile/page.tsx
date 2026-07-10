@@ -8,6 +8,7 @@ export default function ProfilePage() {
   const [user, setUser] = useState<any>(null);
   const [profile, setProfile] = useState<any>(null);
   const [completion, setCompletion] = useState<number>(0);
+  const [applications, setApplications] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [verifying, setVerifying] = useState(false);
 
@@ -41,6 +42,12 @@ export default function ProfilePage() {
             if (compRes.ok) {
               const compData = await compRes.json();
               setCompletion(compData.completion);
+            }
+            const appRes = await fetch('http://13.60.192.118:3001/applications/my-applications', {
+              headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (appRes.ok) {
+              setApplications(await appRes.json());
             }
           }
         } else {
@@ -255,6 +262,31 @@ export default function ProfilePage() {
                 <div><strong>Founded:</strong> <span style={{ color: 'var(--text-secondary)' }}>{profile.foundedYear || 'N/A'}</span></div>
               </div>
             </div>
+
+            <div className="glass-panel" style={{ padding: '2rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                <h2 style={{ fontSize: '1.5rem', margin: 0, color: 'var(--primary-color)' }}>Active Jobs & Applicants</h2>
+                <Link href="/jobs/create" className="btn-primary" style={{ padding: '0.4rem 0.8rem', textDecoration: 'none', fontSize: '0.9rem' }}>Post New Job</Link>
+              </div>
+              
+              {profile.jobs && profile.jobs.length > 0 ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                  {profile.jobs.map((job: any) => (
+                    <div key={job.id} style={{ background: 'rgba(255,255,255,0.05)', padding: '1rem', borderRadius: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div>
+                        <h3 style={{ margin: 0, fontSize: '1.1rem' }}>{job.title}</h3>
+                        <p style={{ margin: '0.2rem 0 0 0', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>{job.location || 'Remote'} • {job.employmentType || 'Full-time'}</p>
+                      </div>
+                      <Link href={`/employer-dashboard/jobs/${job.id}/applicants`} className="btn-primary" style={{ padding: '0.4rem 0.8rem', textDecoration: 'none', fontSize: '0.9rem', background: 'transparent', border: '1px solid #00f0ff', color: '#00f0ff' }}>
+                        View CRM / Applicants
+                      </Link>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p style={{ color: 'var(--text-secondary)' }}>No active job postings.</p>
+              )}
+            </div>
           </>
         )}
       </div>
@@ -278,11 +310,11 @@ export default function ProfilePage() {
               <h3 style={{ margin: '0 0 1rem 0', color: 'var(--primary-color)' }}>Activity</h3>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', textAlign: 'center' }}>
                 <div style={{ background: 'rgba(255,255,255,0.05)', padding: '1rem', borderRadius: '8px' }}>
-                  <div style={{ fontSize: '2rem', fontWeight: 'bold' }}>45</div>
+                  <div style={{ fontSize: '2rem', fontWeight: 'bold' }}>{applications.length}</div>
                   <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Applications</div>
                 </div>
                 <div style={{ background: 'rgba(255,255,255,0.05)', padding: '1rem', borderRadius: '8px' }}>
-                  <div style={{ fontSize: '2rem', fontWeight: 'bold' }}>8</div>
+                  <div style={{ fontSize: '2rem', fontWeight: 'bold' }}>{applications.filter(a => a.status === 'INVITED').length}</div>
                   <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Interviews</div>
                 </div>
                 <div style={{ background: 'rgba(255,255,255,0.05)', padding: '1rem', borderRadius: '8px' }}>
@@ -295,6 +327,22 @@ export default function ProfilePage() {
                 </div>
               </div>
             </div>
+
+            {applications.filter(a => a.status === 'INVITED').length > 0 && (
+              <div className="glass-panel" style={{ padding: '1.5rem' }}>
+                <h3 style={{ margin: '0 0 1rem 0', color: 'var(--primary-color)' }}>Upcoming Interviews</h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  {applications.filter(a => a.status === 'INVITED').map(app => (
+                    <div key={app.id} style={{ background: 'rgba(0,240,255,0.1)', padding: '1rem', borderRadius: '8px', borderLeft: '4px solid #00f0ff' }}>
+                      <div style={{ fontWeight: 'bold', color: 'white' }}>{app.job?.title}</div>
+                      <div style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '0.5rem' }}>{app.job?.employer?.companyName}</div>
+                      <div style={{ fontSize: '0.9rem', color: '#00f0ff' }}>📅 {app.interviewDate ? new Date(app.interviewDate).toLocaleString() : 'TBD'}</div>
+                      {app.interviewLink && <div style={{ fontSize: '0.9rem', color: '#00f0ff' }}>🔗 <a href={app.interviewLink} target="_blank" rel="noreferrer" style={{ color: '#00f0ff' }}>Join Meeting</a></div>}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </>
         )}
 

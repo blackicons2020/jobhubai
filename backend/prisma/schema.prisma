@@ -190,6 +190,8 @@ model Application {
   jobSeekerProfile JobSeekerProfile @relation(fields: [jobSeekerId], references: [id])
   status           ApplicationStatus @default(APPLIED)
   coverLetter      String?
+  interviewDate    DateTime?
+  interviewLink    String?
   createdAt        DateTime         @default(now())
   updatedAt        DateTime         @updatedAt
 }

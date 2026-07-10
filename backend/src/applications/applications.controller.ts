@@ -55,4 +55,16 @@ export class ApplicationsController {
     }
     return this.applicationsService.updateStatus(req.user.userId, id, body.status);
   }
+
+  @Post(':id/schedule-interview')
+  async scheduleInterview(
+    @Request() req,
+    @Param('id') id: string,
+    @Body() body: { interviewDate: string; interviewLink?: string }
+  ) {
+    if (req.user.role !== 'EMPLOYER') {
+      throw new ForbiddenException('Only Employers can schedule interviews.');
+    }
+    return this.applicationsService.scheduleInterview(req.user.userId, id, body.interviewDate, body.interviewLink);
+  }
 }

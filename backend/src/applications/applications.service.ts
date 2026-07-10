@@ -146,4 +146,32 @@ export class ApplicationsService {
       data: { status }
     });
   }
+
+  async scheduleInterview(employerUserId: string, applicationId: string, interviewDate: string, interviewLink?: string) {
+    const application = await this.prisma.application.findUnique({
+      where: { id: applicationId },
+      include: { job: true },
+    });
+
+    if (!application) {
+      throw new NotFoundException('Application not found');
+    }
+
+    const employer = await this.prisma.employer.findUnique({
+      where: { userId: employerUserId },
+    });
+
+    if (application.job.employerId !== employer?.id) {
+      throw new ForbiddenException('You do not have permission to update this application.');
+    }
+
+    return this.prisma.application.update({
+      where: { id: applicationId },
+      data: { 
+        status: 'INVITED',
+        interviewDate: new Date(interviewDate),
+        interviewLink
+      },
+    });
+  }
 }

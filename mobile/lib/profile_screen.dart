@@ -4,6 +4,8 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'login_screen.dart';
 import 'onboarding_screen.dart';
+import 'employer_crm_screen.dart';
+import 'subscription_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -22,6 +24,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Map<String, dynamic>? _aiScore;
   Map<String, dynamic>? _aiSalary;
   List<dynamic>? _aiSuggestions;
+  List<dynamic> _myApplications = [];
   
   bool _isVerifying = false;
 
@@ -68,6 +71,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
           if (compRes.statusCode == 200) {
             setState(() {
               _completion = jsonDecode(compRes.body)['completion'] ?? 0;
+            });
+          }
+
+          final appRes = await http.get(
+            Uri.parse('http://13.60.192.118:3001/applications/my-applications'),
+            headers: {'Authorization': 'Bearer $token'},
+          );
+          if (appRes.statusCode == 200) {
+            setState(() {
+              _myApplications = jsonDecode(appRes.body);
             });
           }
         }
@@ -263,6 +276,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
         
         const SizedBox(height: 32),
         ElevatedButton.icon(
+          onPressed: () {
+            Navigator.push(context, MaterialPageRoute(builder: (context) => const SubscriptionScreen()));
+          },
+          icon: const Icon(Icons.star, color: Colors.black),
+          label: const Text('Upgrade to Premium', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFF00F0FF),
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+        ),
+        
+        const SizedBox(height: 16),
+        ElevatedButton.icon(
           onPressed: _isAiLoading ? null : _generateAiInsights,
           icon: const Icon(Icons.auto_awesome, color: Colors.white),
           label: Text(_isAiLoading ? 'Generating AI Insights...' : 'Generate AI Career Insights', style: const TextStyle(color: Colors.white)),
@@ -342,6 +369,35 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ],
             ),
           ),
+        ],
+
+        if (_myApplications.where((a) => a['status'] == 'INVITED').isNotEmpty) ...[
+          const SizedBox(height: 32),
+          _buildSectionTitle('Upcoming Interviews'),
+          ..._myApplications.where((a) => a['status'] == 'INVITED').map((app) => Container(
+            margin: const EdgeInsets.only(bottom: 12),
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: const Color(0xFF00F0FF).withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+              border: const Border(left: BorderSide(color: Color(0xFF00F0FF), width: 4)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(app['job']?['title'] ?? 'Job', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+                const SizedBox(height: 4),
+                Text(app['job']?['employer']?['companyName'] ?? 'Company', style: const TextStyle(color: Colors.white70)),
+                const SizedBox(height: 8),
+                Text('📅 ${app['interviewDate'] != null ? DateTime.parse(app['interviewDate']).toLocal() : 'TBD'}', style: const TextStyle(color: Color(0xFF00F0FF))),
+                if (app['interviewLink'] != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4.0),
+                    child: Text('🔗 ${app['interviewLink']}', style: const TextStyle(color: Color(0xFF00F0FF))),
+                  ),
+              ],
+            ),
+          )),
         ],
 
         if (_profile?['summary'] != null && _profile!['summary'].toString().isNotEmpty) ...[
@@ -450,6 +506,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
         const SizedBox(height: 32),
         ElevatedButton.icon(
           onPressed: () {
+            Navigator.push(context, MaterialPageRoute(builder: (context) => const SubscriptionScreen()));
+          },
+          icon: const Icon(Icons.star, color: Colors.white),
+          label: const Text('Upgrade to Premium', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFF6366F1),
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+        ),
+
+        const SizedBox(height: 16),
+        ElevatedButton.icon(
+          onPressed: () {
             Navigator.push(context, MaterialPageRoute(builder: (context) => const OnboardingScreen())).then((_) => _fetchData());
           },
           icon: const Icon(Icons.edit, color: Colors.black),
@@ -470,6 +540,35 @@ class _ProfileScreenState extends State<ProfileScreen> {
         _buildInfoRow('Industry', _profile?['industry'] ?? 'N/A'),
         _buildInfoRow('Company Size', _profile?['companySize'] ?? 'N/A'),
         _buildInfoRow('Founded Year', _profile?['foundedYear']?.toString() ?? 'N/A'),
+
+        const SizedBox(height: 32),
+        _buildSectionTitle('Active Jobs & Applicants'),
+        if (_profile?['jobs'] != null && (_profile!['jobs'] as List).isNotEmpty)
+          ...(_profile!['jobs'] as List).map((job) => Card(
+            color: Colors.white.withOpacity(0.05),
+            margin: const EdgeInsets.only(bottom: 8),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            child: ListTile(
+              title: Text(job['title'], style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+              subtitle: Text(job['location'] ?? 'Remote', style: const TextStyle(color: Colors.white70)),
+              trailing: ElevatedButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => EmployerCrmScreen(jobId: job['id'], jobTitle: job['title'])),
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.transparent,
+                  side: const BorderSide(color: Color(0xFF00F0FF)),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                ),
+                child: const Text('View CRM', style: TextStyle(color: Color(0xFF00F0FF), fontSize: 12)),
+              ),
+            ),
+          )).toList()
+        else
+          const Text('No active job postings.', style: TextStyle(color: Colors.white54)),
 
         const SizedBox(height: 32),
         _buildSectionTitle('Contact HR'),
