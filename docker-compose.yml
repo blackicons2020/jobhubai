@@ -25,7 +25,7 @@ services:
 
   ai-service:
     build:
-      context: ./ai-service
+      context: ./ai_service
     ports:
       - "8000:8000"
     environment:

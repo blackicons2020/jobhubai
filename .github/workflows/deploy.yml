@@ -71,6 +71,9 @@ jobs:
           echo "=== Waiting 30s for services to start ==="
           sleep 30
           
+          echo "=== Syncing database schema ==="
+          docker compose exec -T backend npx prisma db push
+          
           # Telemetry after deploy
           {
             echo "=== AFTER DEPLOY ==="
