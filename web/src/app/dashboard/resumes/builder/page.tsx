@@ -1,12 +1,12 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Save, FileText, RefreshCw } from 'lucide-react';
 
-export default function ResumeBuilderPage() {
+function ResumeBuilder() {
   const searchParams = useSearchParams();
   const resumeId = searchParams.get('id');
   const parsedDataParam = searchParams.get('parsedData');
@@ -141,5 +141,13 @@ export default function ResumeBuilderPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function ResumeBuilderPage() {
+  return (
+    <Suspense fallback={<div className="p-8 max-w-5xl mx-auto">Loading builder...</div>}>
+      <ResumeBuilder />
+    </Suspense>
   );
 }
