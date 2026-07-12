@@ -12,7 +12,7 @@ export default function Header() {
       if (!token) return;
 
       try {
-        const res = await fetch('http://13.60.192.118:3001/auth/me', {
+        const res = await fetch('/api/auth/me', {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         if (res.ok) {
@@ -20,7 +20,7 @@ export default function Header() {
           setUser(userData);
           
           const endpoint = userData.role === 'JOB_SEEKER' ? '/profiles/job-seeker' : '/profiles/employer';
-          const profRes = await fetch(`http://13.60.192.118:3001${endpoint}`, {
+          const profRes = await fetch(`/api${endpoint}`, {
             headers: { 'Authorization': `Bearer ${token}` }
           });
           if (profRes.ok) {

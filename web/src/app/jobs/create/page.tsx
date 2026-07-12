@@ -22,7 +22,7 @@ export default function CreateJobPage() {
     setError('');
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch('http://13.60.192.118:3001/ai/job-description/generate', {
+      const res = await fetch('/api/ai/job-description/generate', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -59,7 +59,7 @@ export default function CreateJobPage() {
         throw new Error('You must be logged in as an Employer to post a job.');
       }
 
-      const res = await fetch('http://13.60.192.118:3001/jobs', {
+      const res = await fetch('/api/jobs', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

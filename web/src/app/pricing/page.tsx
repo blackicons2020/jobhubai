@@ -15,7 +15,7 @@ export default function PricingPage() {
 
       // In a real app, this would redirect to Stripe/Paystack.
       // For MVP, we directly upgrade the profile.
-      const res = await fetch('http://13.60.192.118:3001/profiles/upgrade', {
+      const res = await fetch('/api/profiles/upgrade', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`

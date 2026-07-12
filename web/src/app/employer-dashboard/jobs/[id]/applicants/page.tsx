@@ -21,7 +21,7 @@ export default function ApplicantsPage() {
         const token = localStorage.getItem('token');
         if (!token) return router.push('/login');
 
-        const res = await fetch(`http://13.60.192.118:3001/applications/job/${jobId}`, {
+        const res = await fetch(`/api/applications/job/${jobId}`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         
@@ -44,7 +44,7 @@ export default function ApplicantsPage() {
   const updateStatus = async (appId: string, status: string) => {
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch(`http://13.60.192.118:3001/applications/${appId}/status`, {
+      const res = await fetch(`/api/applications/${appId}/status`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({ status })
@@ -63,7 +63,7 @@ export default function ApplicantsPage() {
 
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch(`http://13.60.192.118:3001/applications/${schedulingAppId}/schedule-interview`, {
+      const res = await fetch(`/api/applications/${schedulingAppId}/schedule-interview`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({ interviewDate, interviewLink })

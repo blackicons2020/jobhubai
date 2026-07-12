@@ -27,7 +27,7 @@ export default function JobsFeedPage() {
       }
 
       try {
-        const authRes = await fetch('http://13.60.192.118:3001/auth/me', {
+        const authRes = await fetch('/api/auth/me', {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         if (authRes.ok) {
@@ -38,7 +38,7 @@ export default function JobsFeedPage() {
           
           // Verify profile exists
           const endpoint = user.role === 'JOB_SEEKER' ? '/profiles/job-seeker' : '/profiles/employer';
-          const profileRes = await fetch(`http://13.60.192.118:3001${endpoint}`, {
+          const profileRes = await fetch(`/api${endpoint}`, {
             headers: { 'Authorization': `Bearer ${token}` }
           });
           
@@ -71,7 +71,7 @@ export default function JobsFeedPage() {
   const fetchJobs = async () => {
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch('http://13.60.192.118:3001/jobs', {
+      const res = await fetch('/api/jobs', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) {
@@ -95,7 +95,7 @@ export default function JobsFeedPage() {
         throw new Error('You must be logged in to apply for a job.');
       }
 
-      const res = await fetch(`http://13.60.192.118:3001/applications/${jobId}/apply`, {
+      const res = await fetch(`/api/applications/${jobId}/apply`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -124,12 +124,12 @@ export default function JobsFeedPage() {
     try {
       const token = localStorage.getItem('token');
       // Fetch user profile first (we need it for the AI)
-      const profileRes = await fetch('http://13.60.192.118:3001/profiles/job-seeker', {
+      const profileRes = await fetch('/api/profiles/job-seeker', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const profileData = await profileRes.json();
 
-      const res = await fetch('http://13.60.192.118:3001/ai/cover-letter/generate', {
+      const res = await fetch('/api/ai/cover-letter/generate', {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
@@ -161,13 +161,13 @@ export default function JobsFeedPage() {
     setMatchScores(prev => ({ ...prev, [job.id]: { loading: true } }));
     try {
       const token = localStorage.getItem('token');
-      const profileRes = await fetch('http://13.60.192.118:3001/profiles/job-seeker', {
+      const profileRes = await fetch('/api/profiles/job-seeker', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const profileData = await profileRes.json();
       const profileText = JSON.stringify(profileData);
 
-      const res = await fetch('http://13.60.192.118:3001/ai/match/score', {
+      const res = await fetch('/api/ai/match/score', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

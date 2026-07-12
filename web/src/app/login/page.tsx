@@ -14,7 +14,7 @@ export default function LoginPage() {
     setError('');
 
     try {
-      const res = await fetch('http://13.60.192.118:3001/auth/login', {
+      const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
@@ -31,7 +31,7 @@ export default function LoginPage() {
       const role = data.user?.role;
       const profileEndpoint = role === 'EMPLOYER' ? '/profiles/employer' : '/profiles/job-seeker';
       try {
-        const profileRes = await fetch(`http://13.60.192.118:3001${profileEndpoint}`, {
+        const profileRes = await fetch(`/api${profileEndpoint}`, {
           headers: { 'Authorization': `Bearer ${data.access_token}` }
         });
         if (profileRes.ok) {

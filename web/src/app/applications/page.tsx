@@ -29,7 +29,7 @@ export default function EmployerDashboard() {
         return;
       }
       try {
-        const res = await fetch('http://13.60.192.118:3001/jobs/employer/me', {
+        const res = await fetch('/api/jobs/employer/me', {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         if (res.ok) {
@@ -61,7 +61,7 @@ export default function EmployerDashboard() {
   const fetchInbox = async () => {
     const token = localStorage.getItem('token');
     try {
-      const res = await fetch('http://13.60.192.118:3001/messages/inbox', {
+      const res = await fetch('/api/messages/inbox', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) setInbox(await res.json());
@@ -71,7 +71,7 @@ export default function EmployerDashboard() {
   const fetchChat = async (userId: string) => {
     const token = localStorage.getItem('token');
     try {
-      const res = await fetch(`http://13.60.192.118:3001/messages/${userId}`, {
+      const res = await fetch(`/api/messages/${userId}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) {
@@ -85,7 +85,7 @@ export default function EmployerDashboard() {
     setMatching(true);
     const token = localStorage.getItem('token');
     try {
-      const res = await fetch(`http://13.60.192.118:3001/jobs/${selectedJobId}/matches`, {
+      const res = await fetch(`/api/jobs/${selectedJobId}/matches`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) setMatches(await res.json());
@@ -98,7 +98,7 @@ export default function EmployerDashboard() {
     if (!newMessage.trim() || !selectedChat) return;
     const token = localStorage.getItem('token');
     try {
-      const res = await fetch('http://13.60.192.118:3001/messages', {
+      const res = await fetch('/api/messages', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({ receiverId: selectedChat, content: newMessage })
@@ -113,7 +113,7 @@ export default function EmployerDashboard() {
   const handleInvite = async (userId: string) => {
     const token = localStorage.getItem('token');
     try {
-      const res = await fetch('http://13.60.192.118:3001/messages', {
+      const res = await fetch('/api/messages', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({ receiverId: userId, content: `Hi! We think you'd be a great fit for our recent job posting. We invite you to apply!` })

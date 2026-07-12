@@ -75,7 +75,7 @@ export default function OnboardingPage() {
         return;
       }
       try {
-        const res = await fetch('http://13.60.192.118:3001/auth/me', {
+        const res = await fetch('/api/auth/me', {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         if (res.ok) {
@@ -83,7 +83,7 @@ export default function OnboardingPage() {
           setUser(userData);
           // Try to fetch existing profile to prepopulate (for Edit mode)
           const endpoint = userData.role === 'JOB_SEEKER' ? '/profiles/job-seeker' : '/profiles/employer';
-          const profRes = await fetch(`http://13.60.192.118:3001${endpoint}`, {
+          const profRes = await fetch(`/api${endpoint}`, {
             headers: { 'Authorization': `Bearer ${token}` }
           });
           if (profRes.ok) {
@@ -153,7 +153,7 @@ export default function OnboardingPage() {
     const formData = new FormData();
     formData.append('file', profilePicFile);
     try {
-      const res = await fetch('http://13.60.192.118:3001/uploads/profile-picture', {
+      const res = await fetch('/api/uploads/profile-picture', {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
         body: formData
@@ -196,7 +196,7 @@ export default function OnboardingPage() {
     }
     
     try {
-      const res = await fetch(`http://13.60.192.118:3001${endpoint}`, {
+      const res = await fetch(`/api${endpoint}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify(payload)

@@ -28,13 +28,13 @@ export default function SeekerDashboard() {
         return;
       }
       try {
-        const authRes = await fetch('http://13.60.192.118:3001/auth/me', { headers: { 'Authorization': `Bearer ${token}` } });
+        const authRes = await fetch('/api/auth/me', { headers: { 'Authorization': `Bearer ${token}` } });
         if (authRes.ok) setUser(await authRes.json());
         
-        const profRes = await fetch('http://13.60.192.118:3001/profiles/job-seeker', { headers: { 'Authorization': `Bearer ${token}` } });
+        const profRes = await fetch('/api/profiles/job-seeker', { headers: { 'Authorization': `Bearer ${token}` } });
         if (profRes.ok) setProfile(await profRes.json());
 
-        const appRes = await fetch('http://13.60.192.118:3001/applications/my-applications', { headers: { 'Authorization': `Bearer ${token}` } });
+        const appRes = await fetch('/api/applications/my-applications', { headers: { 'Authorization': `Bearer ${token}` } });
         if (appRes.ok) setApplications(await appRes.json());
       } catch (err) {
         console.error(err);
@@ -52,7 +52,7 @@ export default function SeekerDashboard() {
   const fetchInbox = async () => {
     const token = localStorage.getItem('token');
     try {
-      const res = await fetch('http://13.60.192.118:3001/messages/inbox', {
+      const res = await fetch('/api/messages/inbox', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) setInbox(await res.json());
@@ -62,7 +62,7 @@ export default function SeekerDashboard() {
   const fetchChat = async (userId: string) => {
     const token = localStorage.getItem('token');
     try {
-      const res = await fetch(`http://13.60.192.118:3001/messages/${userId}`, {
+      const res = await fetch(`/api/messages/${userId}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) {
@@ -76,7 +76,7 @@ export default function SeekerDashboard() {
     if (!newMessage.trim() || !selectedChat) return;
     const token = localStorage.getItem('token');
     try {
-      const res = await fetch('http://13.60.192.118:3001/messages', {
+      const res = await fetch('/api/messages', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({ receiverId: selectedChat, content: newMessage })
@@ -91,7 +91,7 @@ export default function SeekerDashboard() {
   const respondToInvitation = async (appId: string, accept: boolean) => {
     const token = localStorage.getItem('token');
     try {
-      const res = await fetch(`http://13.60.192.118:3001/applications/${appId}/seeker-status`, {
+      const res = await fetch(`/api/applications/${appId}/seeker-status`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({ status: accept ? 'ACCEPTED_OFFER' : 'DECLINED_OFFER' })
@@ -110,21 +110,21 @@ export default function SeekerDashboard() {
     setAiLoading(true);
     const token = localStorage.getItem('token');
     try {
-      const pRes = await fetch('http://13.60.192.118:3001/ai/career/suggestions', {
+      const pRes = await fetch('/api/ai/career/suggestions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify(profile)
       });
       const cSuggs = await pRes.json();
       
-      const sRes = await fetch('http://13.60.192.118:3001/ai/salary/estimate', {
+      const sRes = await fetch('/api/ai/salary/estimate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({ job_title: profile?.profession || 'Job Seeker', location: profile?.residenceCity || 'Unknown', experience_years: 3 })
       });
       const sEst = await sRes.json();
 
-      const scoreRes = await fetch('http://13.60.192.118:3001/ai/profile/score', {
+      const scoreRes = await fetch('/api/ai/profile/score', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify(profile)

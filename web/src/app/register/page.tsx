@@ -15,7 +15,7 @@ export default function RegisterPage() {
     setError('');
 
     try {
-      const res = await fetch('http://13.60.192.118:3001/auth/register', {
+      const res = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password, role }),

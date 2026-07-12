@@ -17,7 +17,7 @@ export default function CompanyPublicPage() {
         const headers: any = {};
         if (token) headers['Authorization'] = `Bearer ${token}`;
 
-        const res = await fetch(`http://13.60.192.118:3001/profiles/employer/${id}/public`, { headers });
+        const res = await fetch(`/api/profiles/employer/${id}/public`, { headers });
         if (res.ok) {
           setCompany(await res.json());
         } else {

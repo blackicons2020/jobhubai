@@ -20,7 +20,7 @@ export default function ProfilePage() {
         return;
       }
       try {
-        const res = await fetch('http://13.60.192.118:3001/auth/me', {
+        const res = await fetch('/api/auth/me', {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         if (res.ok) {
@@ -28,7 +28,7 @@ export default function ProfilePage() {
           setUser(userData);
           
           const endpoint = userData.role === 'JOB_SEEKER' ? '/profiles/job-seeker' : '/profiles/employer';
-          const profRes = await fetch(`http://13.60.192.118:3001${endpoint}`, {
+          const profRes = await fetch(`/api${endpoint}`, {
             headers: { 'Authorization': `Bearer ${token}` }
           });
           if (profRes.ok) {
@@ -36,14 +36,14 @@ export default function ProfilePage() {
           }
 
           if (userData.role === 'JOB_SEEKER') {
-            const compRes = await fetch('http://13.60.192.118:3001/profiles/job-seeker/completion', {
+            const compRes = await fetch('/api/profiles/job-seeker/completion', {
               headers: { 'Authorization': `Bearer ${token}` }
             });
             if (compRes.ok) {
               const compData = await compRes.json();
               setCompletion(compData.completion);
             }
-            const appRes = await fetch('http://13.60.192.118:3001/applications/my-applications', {
+            const appRes = await fetch('/api/applications/my-applications', {
               headers: { 'Authorization': `Bearer ${token}` }
             });
             if (appRes.ok) {
@@ -66,7 +66,7 @@ export default function ProfilePage() {
     setVerifying(true);
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch('http://13.60.192.118:3001/profiles/verify/request', {
+      const res = await fetch('/api/profiles/verify/request', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
