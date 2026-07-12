@@ -86,10 +86,7 @@ jobs:
             echo "Register source:" && (docker compose exec -T web grep -r "v2" /app/.next/ 2>/dev/null | head -3 || echo "NOT FOUND")
             echo "Docker Compose Logs (web):" && docker compose logs web --tail 50
             echo "Local Curl Test (port 3000):" && (curl -s http://localhost:3000/register | grep -o "v2" || echo "v2 NOT FOUND in HTML")
-            echo "=== LOGIN POST TEST ==="
-            curl -i -X POST -H "Content-Type: application/json" -d '{"email":"test@example.com","password":"password"}' http://localhost:3001/auth/login
-            echo "=== BACKEND LOGS AFTER TEST ==="
-            docker compose logs backend --tail 50
+            echo "Docker Compose Logs (backend):" && docker compose logs backend --tail 50
             echo "Docker Compose Logs (ai-service):" && docker compose logs ai-service --tail 50
           } > after_deploy.log
           cat after_deploy.log
