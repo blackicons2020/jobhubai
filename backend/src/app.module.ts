@@ -14,7 +14,6 @@ import { UploadsModule } from './uploads/uploads.module';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 import { MessagesModule } from './messages/messages.module';
-import { NetworkModule } from './network/network.module';
 import { ResumesModule } from './resumes/resumes.module';
 import { PaymentsModule } from './payments/payments.module';
 import { AdminModule } from './admin/admin.module';

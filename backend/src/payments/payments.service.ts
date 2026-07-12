@@ -63,7 +63,7 @@ export class PaymentsService {
         // Upgrade user subscription tier
         await this.prisma.user.update({
           where: { id: payment.userId },
-          data: { subscriptionTier: payment.plan === 'PREMIUM_EMPLOYER' ? 'PREMIUM' : 'BASIC' },
+          data: { subscriptionTier: payment.plan === 'PREMIUM_EMPLOYER' ? 'PREMIUM' : 'FREE' },
         });
 
         return { success: true };

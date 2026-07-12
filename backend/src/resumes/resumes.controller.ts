@@ -2,7 +2,7 @@ import { Controller, Post, Get, Body, Param, UseInterceptors, UploadedFile, Req,
 import { ResumesService } from './resumes.service';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { Response } from 'express';
+import type { Response } from 'express';
 
 @Controller('resumes')
 @UseGuards(JwtAuthGuard)

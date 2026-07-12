@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Put, Body, UseGuards, Request, ForbiddenException, Param } from '@nestjs/common';
+import { Controller, Post, Get, Put, Body, UseGuards, Request, ForbiddenException, Param, Query } from '@nestjs/common';
 import { ProfilesService } from './profiles.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { Prisma } from '@prisma/client';

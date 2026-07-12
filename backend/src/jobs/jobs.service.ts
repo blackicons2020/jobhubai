@@ -30,12 +30,7 @@ export class JobsService {
       },
     });
 
-    const newJob = await this.prisma.job.create({
-      data: {
-        ...data,
-        employer: { connect: { id: employer.id } },
-      },
-    });
+
 
     // Run AI checks asynchronously
     this.generateSmartAlerts(newJob).catch(console.error);

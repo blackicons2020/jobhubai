@@ -2,7 +2,7 @@ import { Injectable, InternalServerErrorException, NotFoundException } from '@ne
 import { PrismaService } from '../prisma/prisma.service';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
-import * as pdfParse from 'pdf-parse';
+const pdfParse = require('pdf-parse');
 import * as puppeteer from 'puppeteer';
 
 @Injectable()
@@ -108,7 +108,7 @@ export class ResumesService {
       args: ['--no-sandbox', '--disable-setuid-sandbox'],
     });
     const page = await browser.newPage();
-    await page.setContent(html, { waitUntil: 'networkidle0' });
+    await page.setContent(html, { waitUntil: 'load' });
     
     // Generate PDF
     const pdfBuffer = await page.pdf({

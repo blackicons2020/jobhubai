@@ -51,7 +51,7 @@ export class ProfilesService {
     });
 
     // Attach user emails for display
-    const leaderboard = [];
+    const leaderboard: { email: string, totalRewards: number | null, totalReferrals: number }[] = [];
     for (const row of result) {
       const user = await this.prisma.user.findUnique({ where: { id: row.referrerId } });
       if (user) {

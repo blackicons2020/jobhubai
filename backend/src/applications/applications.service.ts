@@ -60,8 +60,8 @@ export class ApplicationsService {
         jobId,
         jobSeekerId: jobSeekerProfile.id,
         resumeId,
-        portfolioData: jobSeekerProfile.portfolio,
-        certificatesData: jobSeekerProfile.certificates,
+        portfolioData: jobSeekerProfile.portfolio ?? Prisma.JsonNull,
+        certificatesData: jobSeekerProfile.certificates ?? Prisma.JsonNull,
         coverLetter: generatedCoverLetter,
         aiMatchScore: Math.floor(Math.random() * 20) + 80, // Mock AI Match Score (80-99%)
         status: ApplicationStatus.APPLIED,
