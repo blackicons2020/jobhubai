@@ -107,4 +107,10 @@ export class AiController {
     }
     return this.aiService.detectFraud(content);
   }
+
+  @Post('mentor/chat')
+  async mentorChat(@Request() req, @Body('message') message: string) {
+    await this.checkGenerationLimit(req.user.userId);
+    return this.aiService.mentorChat(req.user.userId, message);
+  }
 }

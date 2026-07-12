@@ -15,7 +15,20 @@ class JobHubAIApp extends StatelessWidget {
     return MaterialApp(
       title: 'JobHub AI',
       debugShowCheckedModeBanner: false,
+      themeMode: ThemeMode.system,
       theme: ThemeData(
+        brightness: Brightness.light,
+        scaffoldBackgroundColor: const Color(0xFFF3F4F6),
+        primaryColor: const Color(0xFF6366F1),
+        colorScheme: const ColorScheme.light(
+          primary: Color(0xFF6366F1),
+          secondary: Color(0xFF00F0FF),
+          surface: Colors.white,
+        ),
+        textTheme: GoogleFonts.outfitTextTheme(ThemeData.light().textTheme),
+        useMaterial3: true,
+      ),
+      darkTheme: ThemeData(
         brightness: Brightness.dark,
         scaffoldBackgroundColor: const Color(0xFF0A0A0A),
         primaryColor: const Color(0xFF6366F1),

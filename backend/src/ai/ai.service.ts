@@ -122,4 +122,15 @@ export class AiService {
       throw new HttpException('Failed to detect fraud via AI service', HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
+
+  async mentorChat(userId: string, message: string): Promise<any> {
+    try {
+      // In a real app, fetch context (e.g. CV) to send to AI
+      const context = {};
+      const response = await lastValueFrom(this.httpService.post(`${this.fastApiUrl}/mentor/chat`, { userId, message, context }));
+      return response.data;
+    } catch (error) {
+      throw new HttpException('Failed to communicate with AI mentor', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
 }

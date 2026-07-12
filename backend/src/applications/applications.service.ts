@@ -36,6 +36,39 @@ export class ApplicationsService {
     });
   }
 
+  async applyOneTap(userId: string, jobId: string, resumeId: string) {
+    const jobSeekerProfile = await this.prisma.jobSeekerProfile.findUnique({
+      where: { userId },
+    });
+
+    if (!jobSeekerProfile) throw new ForbiddenException('Profile not found.');
+
+    const job = await this.prisma.job.findUnique({ where: { id: jobId } });
+    if (!job) throw new NotFoundException('Job not found.');
+
+    const existingApp = await this.prisma.application.findFirst({
+      where: { jobId, jobSeekerId: jobSeekerProfile.id },
+    });
+
+    if (existingApp) throw new ConflictException('Already applied.');
+
+    // Mock AI call for cover letter generation
+    const generatedCoverLetter = `Dear Hiring Manager, based on my portfolio and resume, I am an excellent fit for the ${job.title} position...`;
+
+    return this.prisma.application.create({
+      data: {
+        jobId,
+        jobSeekerId: jobSeekerProfile.id,
+        resumeId,
+        portfolioData: jobSeekerProfile.portfolio,
+        certificatesData: jobSeekerProfile.certificates,
+        coverLetter: generatedCoverLetter,
+        aiMatchScore: Math.floor(Math.random() * 20) + 80, // Mock AI Match Score (80-99%)
+        status: ApplicationStatus.APPLIED,
+      }
+    });
+  }
+
   async getMyApplications(userId: string) {
     const jobSeekerProfile = await this.prisma.jobSeekerProfile.findUnique({
       where: { userId },
@@ -68,7 +101,10 @@ export class ApplicationsService {
       include: {
         jobSeekerProfile: true,
       },
-      orderBy: { createdAt: 'desc' },
+      orderBy: [
+        { aiMatchScore: 'desc' },
+        { createdAt: 'desc' }
+      ]
     });
   }
 

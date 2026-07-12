@@ -16,6 +16,14 @@ export class ApplicationsController {
     return this.applicationsService.applyToJob(req.user.userId, jobId, body.coverLetter);
   }
 
+  @Post(':jobId/one-tap')
+  async applyOneTap(@Request() req, @Param('jobId') jobId: string, @Body() body: { resumeId: string }) {
+    if (req.user.role !== 'JOB_SEEKER') {
+      throw new ForbiddenException('Only Job Seekers can apply for jobs.');
+    }
+    return this.applicationsService.applyOneTap(req.user.userId, jobId, body.resumeId);
+  }
+
   @Post(':jobId/invite')
   async invite(@Request() req, @Param('jobId') jobId: string, @Body() body: { jobSeekerId: string }) {
     if (req.user.role !== 'EMPLOYER') {

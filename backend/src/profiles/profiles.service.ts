@@ -17,6 +17,54 @@ export class ProfilesService {
     });
   }
 
+  async searchTalent(skill?: string) {
+    const whereClause: any = { isFlagged: false };
+    if (skill) {
+      whereClause.skills = { has: skill };
+    }
+    
+    return this.prisma.jobSeekerProfile.findMany({
+      where: whereClause,
+      include: {
+        user: { select: { email: true } }
+      },
+      take: 50,
+      orderBy: { profileViews: 'desc' }
+    });
+  }
+
+  async getNotifications(userId: string) {
+    return this.prisma.notification.findMany({
+      where: { userId },
+      orderBy: { createdAt: 'desc' }
+    });
+  }
+
+  async getReferralLeaderboard() {
+    // Group by referrer and sum rewards
+    const result = await this.prisma.referral.groupBy({
+      by: ['referrerId'],
+      _sum: { rewardAmount: true },
+      _count: { id: true },
+      orderBy: { _sum: { rewardAmount: 'desc' } },
+      take: 10
+    });
+
+    // Attach user emails for display
+    const leaderboard = [];
+    for (const row of result) {
+      const user = await this.prisma.user.findUnique({ where: { id: row.referrerId } });
+      if (user) {
+        leaderboard.push({
+          email: user.email,
+          totalRewards: row._sum.rewardAmount,
+          totalReferrals: row._count.id
+        });
+      }
+    }
+    return leaderboard;
+  }
+
   async getJobSeekerProfile(userId: string) {
     const profile = await this.prisma.jobSeekerProfile.findUnique({
       where: { userId },

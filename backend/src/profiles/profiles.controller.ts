@@ -50,6 +50,25 @@ export class ProfilesController {
     return this.profilesService.upsertJobSeekerProfile(req.user.userId, data);
   }
 
+  @Get('talent')
+  @UseGuards(JwtAuthGuard)
+  async searchTalent(@Request() req, @Query('skill') skill?: string) {
+    if (req.user.role !== 'EMPLOYER' && req.user.role !== 'ADMIN') {
+      throw new ForbiddenException('Only employers can search talent pools.');
+    }
+    return this.profilesService.searchTalent(skill);
+  }
+
+  @Get('notifications')
+  async getNotifications(@Request() req) {
+    return this.profilesService.getNotifications(req.user.userId);
+  }
+
+  @Get('leaderboard')
+  async getLeaderboard() {
+    return this.profilesService.getReferralLeaderboard();
+  }
+
   @Get('job-seeker')
   async getJobSeekerProfile(@Request() req) {
     if (req.user.role !== 'JOB_SEEKER') {

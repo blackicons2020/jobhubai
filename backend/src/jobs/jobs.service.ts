@@ -23,12 +23,78 @@ export class JobsService {
       }
     }
 
-    return this.prisma.job.create({
+    const newJob = await this.prisma.job.create({
       data: {
         ...data,
         employer: { connect: { id: employer.id } },
       },
     });
+
+    const newJob = await this.prisma.job.create({
+      data: {
+        ...data,
+        employer: { connect: { id: employer.id } },
+      },
+    });
+
+    // Run AI checks asynchronously
+    this.generateSmartAlerts(newJob).catch(console.error);
+    this.runFraudCheck(newJob).catch(console.error);
+
+    return newJob;
+  }
+
+  private async runFraudCheck(job: any) {
+    // In real app, call AI service
+    const text = job.title + ' ' + job.description;
+    let score = 10;
+    if (text.toLowerCase().includes('scam')) score = 90;
+
+    if (score > 80) {
+      await this.prisma.job.update({
+        where: { id: job.id },
+        data: { isFlagged: true, fraudScore: score, flagReason: 'High probability of spam' }
+      });
+    }
+  }
+
+  private async generateSmartAlerts(job: any) {
+    // Basic logic to find profiles matching the job
+    const jobText = (job.title + ' ' + job.description).toLowerCase();
+    const jobWords = jobText.split(/[^a-z0-9]/).filter(w => w.length > 3);
+
+    const profiles = await this.prisma.jobSeekerProfile.findMany({
+      include: { user: true }
+    });
+
+    for (const profile of profiles) {
+      const profileText = [
+        profile.profession,
+        profile.skilledProfession,
+        profile.headline,
+        profile.summary,
+        ...profile.skills
+      ].filter(Boolean).join(' ').toLowerCase();
+
+      let score = 0;
+      for (const word of jobWords) {
+        if (profileText.includes(word)) score++;
+      }
+
+      // Calculate a faux probability based on score matching
+      const matchProbability = Math.min(99, 50 + (score * 5));
+      
+      if (matchProbability >= 85) { // Only high chance
+        await this.prisma.notification.create({
+          data: {
+            userId: profile.user.id,
+            jobId: job.id,
+            matchProbability,
+            message: `Smart Alert: You have a ${matchProbability}% chance of shortlisting for ${job.title} at ${job.employerId}` // In real app, fetch company name
+          }
+        });
+      }
+    }
   }
 
   async findFeed(userId: string) {
@@ -90,6 +156,42 @@ export class JobsService {
         jobs = jobs.slice(0, 6);
       }
     }
+
+    return jobs;
+  }
+
+  async findMarketplace(userId: string) {
+    const marketplaceTypes = ['FREELANCE', 'CONTRACT', 'GIG', 'HOURLY'];
+    
+    let jobs = await this.prisma.job.findMany({
+      where: {
+        employmentType: {
+          in: marketplaceTypes
+        }
+      },
+      orderBy: { createdAt: 'desc' },
+      include: {
+        employer: { select: { companyName: true, website: true } }
+      }
+    });
+
+    return jobs;
+  }
+
+  async findInternships(userId: string) {
+    const internshipTypes = ['INTERNSHIP', 'GRADUATE', 'NYSC', 'APPRENTICESHIP'];
+    
+    let jobs = await this.prisma.job.findMany({
+      where: {
+        employmentType: {
+          in: internshipTypes
+        }
+      },
+      orderBy: { createdAt: 'desc' },
+      include: {
+        employer: { select: { companyName: true, website: true } }
+      }
+    });
 
     return jobs;
   }
@@ -184,5 +286,29 @@ export class JobsService {
     }).filter(p => p.matchScore > 0).sort((a, b) => b.matchScore - a.matchScore);
 
     return scored;
+  }
+
+  async referCandidate(referrerId: string, jobId: string, candidateEmail: string) {
+    const job = await this.prisma.job.findUnique({ where: { id: jobId } });
+    if (!job) throw new NotFoundException('Job not found');
+
+    const candidateUser = await this.prisma.user.findUnique({ where: { email: candidateEmail }, include: { jobSeekerProfile: true } });
+    if (!candidateUser || !candidateUser.jobSeekerProfile) throw new NotFoundException('Candidate profile not found');
+
+    const existingReferral = await this.prisma.referral.findFirst({
+      where: { jobId, candidateId: candidateUser.jobSeekerProfile.id }
+    });
+
+    if (existingReferral) throw new ForbiddenException('Candidate has already been referred for this job');
+
+    return this.prisma.referral.create({
+      data: {
+        referrerId,
+        candidateId: candidateUser.jobSeekerProfile.id,
+        jobId,
+        status: 'PENDING',
+        rewardAmount: 50 // e.g. $50 or 50 points
+      }
+    });
   }
 }
