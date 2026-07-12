@@ -1,5 +1,5 @@
 import os
-import numpy as np
+import math
 import google.generativeai as genai
 
 api_key = os.getenv("GEMINI_API_KEY")
@@ -24,13 +24,12 @@ def generate_embedding(text: str) -> list[float]:
 
 def cosine_similarity(vec1: list[float], vec2: list[float]) -> float:
     """Calculates cosine similarity between two vectors."""
-    a = np.array(vec1)
-    b = np.array(vec2)
-    norm_a = np.linalg.norm(a)
-    norm_b = np.linalg.norm(b)
+    dot_product = sum(a * b for a, b in zip(vec1, vec2))
+    norm_a = math.sqrt(sum(a * a for a in vec1))
+    norm_b = math.sqrt(sum(b * b for b in vec2))
     if norm_a == 0 or norm_b == 0:
         return 0.0
-    return float(np.dot(a, b) / (norm_a * norm_b))
+    return float(dot_product / (norm_a * norm_b))
 
 def calculate_match_score(profile_text: str, job_description_text: str) -> float:
     """
