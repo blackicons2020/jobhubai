@@ -2,10 +2,12 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from typing import List, Optional
 import os
+import json
 from dotenv import load_dotenv
-from services.resume_engine import generate_resume
+from services.resume_engine import generate_resume, parse_resume_text, optimize_ats_resume
 from services.cover_letter_engine import generate_cover_letter
 from services.matching_engine import generate_embedding, calculate_match_score
+import google.generativeai as genai
 
 load_dotenv()
 
@@ -69,6 +71,51 @@ def api_generate_embedding(req: EmbeddingRequest):
         return {"embedding": embedding}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+class ParseResumeRequest(BaseModel):
+    text: str
+
+class OptimizeAtsRequest(BaseModel):
+    resume: dict
+    jobDescription: str
+
+@app.post("/ai/parse-resume")
+def api_parse_resume(req: ParseResumeRequest):
+    try:
+        data = parse_resume_text(req.text)
+        return data
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/ai/optimize-ats")
+def api_optimize_ats(req: OptimizeAtsRequest):
+    try:
+        data = optimize_ats_resume(req.resume, req.jobDescription)
+        return data
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/ai/mentor/chat")
+def api_mentor_chat(req: dict):
+    message = req.get("message", "")
+    context = req.get("context", {})
+    
+    api_key = os.getenv("GEMINI_API_KEY")
+    if not api_key:
+        return {"reply": "[MOCK MENTOR] - Please provide a GEMINI_API_KEY to speak with the AI mentor."}
+        
+    model = genai.GenerativeModel('gemini-1.5-flash')
+    prompt = f"""
+    You are an expert AI Career Mentor. Help the candidate with their career queries.
+    Context about candidate: {json.dumps(context)}
+    Candidate Message: {message}
+    Provide a professional, encouraging, and actionable response.
+    """
+    try:
+        response = model.generate_content(prompt)
+        return {"reply": response.text}
+    except Exception as e:
+        return {"reply": f"Sorry, I encountered an error: {str(e)}"}
 
 from services.advanced_engine import score_profile, skill_gap_analysis, estimate_salary, career_suggestions, generate_interview_questions, generate_job_description, detect_fraud
 

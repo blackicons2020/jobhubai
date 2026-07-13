@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { countriesList, countryStates, phoneCodes } from '../../lib/countriesData';
 
 export default function OnboardingPage() {
   const router = useRouter();
@@ -18,6 +19,8 @@ export default function OnboardingPage() {
   const [gender, setGender] = useState('');
   const [dateOfBirth, setDateOfBirth] = useState('');
   const [phone, setPhone] = useState('');
+  const [phoneCode, setPhoneCode] = useState('+1');
+  const [hrPhoneCode, setHrPhoneCode] = useState('+1');
   const [nationality, setNationality] = useState('');
   const [maritalStatus, setMaritalStatus] = useState('');
   
@@ -94,7 +97,17 @@ export default function OnboardingPage() {
               setOtherNames(prof.otherNames || '');
               setGender(prof.gender || '');
               setDateOfBirth(prof.dateOfBirth ? prof.dateOfBirth.split('T')[0] : '');
-              setPhone(prof.phone || '');
+              
+              const rawPhone = prof.phone || '';
+              const matchedCode = phoneCodes.find(pc => rawPhone.startsWith(pc.code));
+              if (matchedCode) {
+                setPhoneCode(matchedCode.code);
+                setPhone(rawPhone.slice(matchedCode.code.length));
+              } else {
+                setPhoneCode('+1');
+                setPhone(rawPhone);
+              }
+
               setNationality(prof.nationality || '');
               setMaritalStatus(prof.maritalStatus || '');
               setHeadline(prof.headline || '');
@@ -132,7 +145,17 @@ export default function OnboardingPage() {
               setLocationCity(prof.locationCity || '');
               setHrContactName(prof.hrContactName || '');
               setHrEmail(prof.hrEmail || '');
-              setHrPhone(prof.hrPhone || '');
+              
+              const rawHrPhone = prof.hrPhone || '';
+              const matchedHrCode = phoneCodes.find(pc => rawHrPhone.startsWith(pc.code));
+              if (matchedHrCode) {
+                setHrPhoneCode(matchedHrCode.code);
+                setHrPhone(rawHrPhone.slice(matchedHrCode.code.length));
+              } else {
+                setHrPhoneCode('+1');
+                setHrPhone(rawHrPhone);
+              }
+
               setProfilePicUrl(prof.profilePicture || '');
             }
           }
@@ -179,7 +202,7 @@ export default function OnboardingPage() {
     if (user?.role === 'JOB_SEEKER') {
       endpoint = '/profiles/job-seeker';
       payload = {
-        firstName, lastName, otherNames, gender, phone, nationality, maritalStatus,
+        firstName, lastName, otherNames, gender, phone: phoneCode + phone, nationality, maritalStatus,
         dateOfBirth: dateOfBirth ? new Date(dateOfBirth).toISOString() : null,
         headline, profession, isSkilledProfessional, skilledProfession, summary,
         residenceCountry, residenceState, residenceCity, citizenshipCountry, willingToRelocate,
@@ -191,7 +214,7 @@ export default function OnboardingPage() {
       endpoint = '/profiles/employer';
       payload = {
         companyName, description, industry, companySize, foundedYear: parseInt(foundedYear) || null,
-        locationCountry, locationState, locationCity, hrContactName, hrEmail, hrPhone, profilePicture: uploadedUrl
+        locationCountry, locationState, locationCity, hrContactName, hrEmail, hrPhone: hrPhoneCode + hrPhone, profilePicture: uploadedUrl
       };
     }
     
@@ -225,10 +248,25 @@ export default function OnboardingPage() {
             <input placeholder="First Name" value={firstName} onChange={e => setFirstName(e.target.value)} className="input-field" />
             <input placeholder="Last Name" value={lastName} onChange={e => setLastName(e.target.value)} className="input-field" />
             <input placeholder="Other Names (Optional)" value={otherNames} onChange={e => setOtherNames(e.target.value)} className="input-field" />
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
-              <input placeholder="Phone Number" value={phone} onChange={e => setPhone(e.target.value)} className="input-field" />
-              <input placeholder="Nationality" value={nationality} onChange={e => setNationality(e.target.value)} className="input-field" />
+            
+            <label style={{ color: 'white', display: 'block', marginBottom: '0.2rem', fontSize: '0.9rem' }}>Phone Number</label>
+            <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
+              <select value={phoneCode} onChange={e => setPhoneCode(e.target.value)} className="input-field" style={{ width: '130px', marginBottom: 0 }}>
+                {phoneCodes.map(pc => (
+                  <option key={pc.code + pc.name} value={pc.code}>{pc.code} ({pc.name})</option>
+                ))}
+              </select>
+              <input placeholder="Phone Number" value={phone} onChange={e => setPhone(e.target.value)} className="input-field" style={{ flex: 1, marginBottom: 0 }} />
             </div>
+
+            <label style={{ color: 'white', display: 'block', marginBottom: '0.2rem', fontSize: '0.9rem' }}>Nationality</label>
+            <select value={nationality} onChange={e => setNationality(e.target.value)} className="input-field">
+              <option value="">Select Nationality (Country)</option>
+              {countriesList.map(c => (
+                <option key={c} value={c}>{c}</option>
+              ))}
+            </select>
+
             <div style={{ display: 'flex', gap: '0.5rem' }}>
               <select value={gender} onChange={e => setGender(e.target.value)} className="input-field">
                 <option value="">Select Gender</option>
@@ -241,6 +279,8 @@ export default function OnboardingPage() {
                 <option value="Married">Married</option>
               </select>
             </div>
+            
+            <label style={{ color: 'white', display: 'block', marginBottom: '0.2rem', fontSize: '0.9rem' }}>Date of Birth</label>
             <input type="date" value={dateOfBirth} onChange={e => setDateOfBirth(e.target.value)} className="input-field" title="Date of Birth" />
           </div>
         );
@@ -264,10 +304,59 @@ export default function OnboardingPage() {
         return (
           <div className="fly-in">
             <h2>Location & Preferences</h2>
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
-              <input placeholder="Country" value={residenceCountry} onChange={e => setResidenceCountry(e.target.value)} className="input-field" />
-              <input placeholder="State" value={residenceState} onChange={e => setResidenceState(e.target.value)} className="input-field" />
-              <input placeholder="City" value={residenceCity} onChange={e => setResidenceCity(e.target.value)} className="input-field" />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              <label style={{ color: 'white', fontSize: '0.9rem' }}>Country</label>
+              <select value={residenceCountry} onChange={e => {
+                setResidenceCountry(e.target.value);
+                setResidenceState('');
+              }} className="input-field">
+                <option value="">Select Country</option>
+                {countriesList.map(c => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+              </select>
+
+              <label style={{ color: 'white', fontSize: '0.9rem' }}>State / Province</label>
+              {residenceCountry && countryStates[residenceCountry] ? (
+                <>
+                  <select 
+                    value={countryStates[residenceCountry].includes(residenceState) ? residenceState : (residenceState ? 'OTHER_STATE' : '')} 
+                    onChange={e => {
+                      if (e.target.value === 'OTHER_STATE') {
+                        setResidenceState('');
+                      } else {
+                        setResidenceState(e.target.value);
+                      }
+                    }} 
+                    className="input-field"
+                  >
+                    <option value="">Select State</option>
+                    {countryStates[residenceCountry].map(s => (
+                      <option key={s} value={s}>{s}</option>
+                    ))}
+                    <option value="OTHER_STATE">Other / Enter Manually</option>
+                  </select>
+                  {(!residenceState || !countryStates[residenceCountry].includes(residenceState)) && (
+                    <input 
+                      placeholder="Enter State Manually" 
+                      value={residenceState} 
+                      onChange={e => setResidenceState(e.target.value)} 
+                      className="input-field" 
+                    />
+                  )}
+                </>
+              ) : (
+                <input 
+                  placeholder="State / Province" 
+                  value={residenceState} 
+                  onChange={e => setResidenceState(e.target.value)} 
+                  className="input-field" 
+                  disabled={!residenceCountry}
+                />
+              )}
+
+              <label style={{ color: 'white', fontSize: '0.9rem' }}>City / Town</label>
+              <input placeholder="City / Town" value={residenceCity} onChange={e => setResidenceCity(e.target.value)} className="input-field" />
             </div>
             <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem' }}>
               <label style={{ color: 'white', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -395,15 +484,75 @@ export default function OnboardingPage() {
         return (
           <div className="fly-in">
             <h2>Location & Contact</h2>
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
-              <input placeholder="Country" value={locationCountry} onChange={e => setLocationCountry(e.target.value)} className="input-field" />
-              <input placeholder="State" value={locationState} onChange={e => setLocationState(e.target.value)} className="input-field" />
-              <input placeholder="City" value={locationCity} onChange={e => setLocationCity(e.target.value)} className="input-field" />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '1.5rem' }}>
+              <label style={{ color: 'white', fontSize: '0.9rem' }}>Country</label>
+              <select value={locationCountry} onChange={e => {
+                setLocationCountry(e.target.value);
+                setLocationState('');
+              }} className="input-field">
+                <option value="">Select Country</option>
+                {countriesList.map(c => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+              </select>
+
+              <label style={{ color: 'white', fontSize: '0.9rem' }}>State / Province</label>
+              {locationCountry && countryStates[locationCountry] ? (
+                <>
+                  <select 
+                    value={countryStates[locationCountry].includes(locationState) ? locationState : (locationState ? 'OTHER_STATE' : '')} 
+                    onChange={e => {
+                      if (e.target.value === 'OTHER_STATE') {
+                        setLocationState('');
+                      } else {
+                        setLocationState(e.target.value);
+                      }
+                    }} 
+                    className="input-field"
+                  >
+                    <option value="">Select State</option>
+                    {countryStates[locationCountry].map(s => (
+                      <option key={s} value={s}>{s}</option>
+                    ))}
+                    <option value="OTHER_STATE">Other / Enter Manually</option>
+                  </select>
+                  {(!locationState || !countryStates[locationCountry].includes(locationState)) && (
+                    <input 
+                      placeholder="Enter State Manually" 
+                      value={locationState} 
+                      onChange={e => setLocationState(e.target.value)} 
+                      className="input-field" 
+                    />
+                  )}
+                </>
+              ) : (
+                <input 
+                  placeholder="State / Province" 
+                  value={locationState} 
+                  onChange={e => setLocationState(e.target.value)} 
+                  className="input-field" 
+                  disabled={!locationCountry}
+                />
+              )}
+
+              <label style={{ color: 'white', fontSize: '0.9rem' }}>City / Town</label>
+              <input placeholder="City / Town" value={locationCity} onChange={e => setLocationCity(e.target.value)} className="input-field" />
             </div>
-            <hr style={{ margin: '1rem 0', borderColor: 'rgba(255,255,255,0.1)' }} />
+            
+            <hr style={{ margin: '1.5rem 0', borderColor: 'rgba(255,255,255,0.1)' }} />
+            <h2>Contact Person (HR)</h2>
             <input placeholder="HR Contact Name" value={hrContactName} onChange={e => setHrContactName(e.target.value)} className="input-field" />
             <input placeholder="HR Email" value={hrEmail} onChange={e => setHrEmail(e.target.value)} className="input-field" />
-            <input placeholder="HR Phone" value={hrPhone} onChange={e => setHrPhone(e.target.value)} className="input-field" />
+            
+            <label style={{ color: 'white', display: 'block', marginBottom: '0.2rem', fontSize: '0.9rem' }}>HR Phone</label>
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <select value={hrPhoneCode} onChange={e => setHrPhoneCode(e.target.value)} className="input-field" style={{ width: '130px', marginBottom: 0 }}>
+                {phoneCodes.map(pc => (
+                  <option key={pc.code + pc.name} value={pc.code}>{pc.code} ({pc.name})</option>
+                ))}
+              </select>
+              <input placeholder="HR Phone" value={hrPhone} onChange={e => setHrPhone(e.target.value)} className="input-field" style={{ flex: 1, marginBottom: 0 }} />
+            </div>
           </div>
         );
       case 3:
@@ -431,6 +580,7 @@ export default function OnboardingPage() {
         .fly-in { animation: flyIn 0.5s ease-out forwards; }
         @keyframes flyIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
         .input-field { width: 100%; padding: 1rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); background-color: rgba(255,255,255,0.05); color: white; font-size: 1rem; outline: none; margin-bottom: 1rem; }
+        select.input-field option { background-color: #120b1c; color: white; }
       `}</style>
       <div className="glass-panel" style={{ width: '100%', maxWidth: '600px', padding: '3rem 2rem', overflow: 'hidden' }}>
         <h1 className="text-gradient" style={{ textAlign: 'center', margin: 0 }}>Complete Your Profile</h1>

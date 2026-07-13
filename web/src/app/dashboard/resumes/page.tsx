@@ -51,6 +51,22 @@ export default function ResumesPage() {
     }
   };
 
+  const handleExportWord = async (id: string) => {
+    try {
+      const res = await fetch(`/api/resumes/${id}/export/word`, { method: 'POST' });
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'resume.doc';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   return (
     <div className="p-8 max-w-6xl mx-auto space-y-8">
       <div className="flex justify-between items-center">
@@ -100,8 +116,11 @@ export default function ResumesPage() {
                 <Link href={`/dashboard/resumes/builder?id=${resume.id}`} className="flex-1">
                   <Button variant="outline" className="w-full">Edit</Button>
                 </Link>
-                <Button variant="secondary" size="icon" onClick={() => handleExport(resume.id)}>
-                  <Download className="w-4 h-4" />
+                <Button variant="secondary" size="icon" onClick={() => handleExport(resume.id)} title="Export PDF">
+                  <span style={{ fontSize: '0.75rem', fontWeight: 'bold' }}>PDF</span>
+                </Button>
+                <Button variant="secondary" size="icon" onClick={() => handleExportWord(resume.id)} title="Export Word">
+                  <span style={{ fontSize: '0.75rem', fontWeight: 'bold' }}>DOC</span>
                 </Button>
               </CardFooter>
             </Card>

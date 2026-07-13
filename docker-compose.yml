@@ -20,6 +20,7 @@ services:
     environment:
       DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:password@db:5432/jobhub?schema=public}
       JWT_SECRET: ${JWT_SECRET:-dev_secret}
+      AI_SERVICE_URL: http://ai-service:8000/ai
     depends_on:
       - db
 

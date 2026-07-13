@@ -1,10 +1,14 @@
 import { Injectable, NotFoundException, ForbiddenException, ConflictException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { Prisma, ApplicationStatus } from '@prisma/client';
+import { AiService } from '../ai/ai.service';
 
 @Injectable()
 export class ApplicationsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private aiService: AiService,
+  ) {}
 
   async applyToJob(userId: string, jobId: string, coverLetter?: string) {
     const jobSeekerProfile = await this.prisma.jobSeekerProfile.findUnique({
@@ -26,11 +30,22 @@ export class ApplicationsService {
       throw new ConflictException('You have already applied to this job.');
     }
 
+    // Calculate actual AI match score based on candidate profile and job description
+    let matchScore = 85.0;
+    try {
+      const profileText = `${jobSeekerProfile.bio || ''} ${jobSeekerProfile.skills.join(', ')}`;
+      const jobText = `${job.title} ${job.description}`;
+      matchScore = await this.aiService.calculateMatchScore(profileText, jobText);
+    } catch (err) {
+      console.error('Failed to calculate AI match score:', err);
+    }
+
     return this.prisma.application.create({
       data: {
         job: { connect: { id: jobId } },
         jobSeekerProfile: { connect: { id: jobSeekerProfile.id } },
         coverLetter,
+        aiMatchScore: matchScore,
         status: ApplicationStatus.APPLIED,
       },
     });
@@ -52,8 +67,32 @@ export class ApplicationsService {
 
     if (existingApp) throw new ConflictException('Already applied.');
 
-    // Mock AI call for cover letter generation
-    const generatedCoverLetter = `Dear Hiring Manager, based on my portfolio and resume, I am an excellent fit for the ${job.title} position...`;
+    // Fetch the resume text if resumeId is provided
+    let resumeText = '';
+    if (resumeId) {
+      const resume = await this.prisma.resume.findUnique({ where: { id: resumeId } });
+      if (resume) {
+        resumeText = `${resume.summary || ''} ${JSON.stringify(resume.skills || [])} ${JSON.stringify(resume.experience || [])}`;
+      }
+    }
+
+    // Calculate actual AI match score
+    let matchScore = 85.0;
+    try {
+      const profileText = resumeText || `${jobSeekerProfile.bio || ''} ${jobSeekerProfile.skills.join(', ')}`;
+      const jobText = `${job.title} ${job.description}`;
+      matchScore = await this.aiService.calculateMatchScore(profileText, jobText);
+    } catch (err) {
+      console.error('Failed to calculate AI match score in one tap:', err);
+    }
+
+    // Generate cover letter using AI Service
+    let generatedCoverLetter = `Dear Hiring Manager, based on my portfolio and resume, I am an excellent fit for the ${job.title} position...`;
+    try {
+      generatedCoverLetter = await this.aiService.generateCoverLetter(jobSeekerProfile, job);
+    } catch (err) {
+      console.error('Failed to generate cover letter in one-tap:', err);
+    }
 
     return this.prisma.application.create({
       data: {
@@ -63,7 +102,7 @@ export class ApplicationsService {
         portfolioData: jobSeekerProfile.portfolio ?? Prisma.JsonNull,
         certificatesData: jobSeekerProfile.certificates ?? Prisma.JsonNull,
         coverLetter: generatedCoverLetter,
-        aiMatchScore: Math.floor(Math.random() * 20) + 80, // Mock AI Match Score (80-99%)
+        aiMatchScore: matchScore,
         status: ApplicationStatus.APPLIED,
       }
     });

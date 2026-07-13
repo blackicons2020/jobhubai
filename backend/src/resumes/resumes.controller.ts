@@ -14,6 +14,11 @@ export class ResumesController {
     return this.resumesService.getResumes(req.user.id);
   }
 
+  @Get(':id')
+  async getResume(@Param('id') id: string, @Req() req: any) {
+    return this.resumesService.getResume(id, req.user.id);
+  }
+
   @Post('parse')
   @UseInterceptors(FileInterceptor('file'))
   async parseResume(@UploadedFile() file: Express.Multer.File, @Req() req: any) {
@@ -34,6 +39,17 @@ export class ResumesController {
       'Content-Length': pdfBuffer.length,
     });
     res.end(pdfBuffer);
+  }
+
+  @Post(':id/export/word')
+  async exportWord(@Param('id') id: string, @Req() req: any, @Res() res: Response) {
+    const wordBuffer = await this.resumesService.exportWord(id, req.user.id);
+    res.set({
+      'Content-Type': 'application/msword',
+      'Content-Disposition': `attachment; filename="resume.doc"`,
+      'Content-Length': wordBuffer.length,
+    });
+    res.end(wordBuffer);
   }
 
   @Post(':id/ats-optimize')

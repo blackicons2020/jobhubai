@@ -7,6 +7,8 @@ import * as puppeteer from 'puppeteer';
 
 @Injectable()
 export class ResumesService {
+  private readonly fastApiUrl = process.env.AI_SERVICE_URL || 'http://ai-service:8000/ai';
+
   constructor(
     private prisma: PrismaService,
     private httpService: HttpService,
@@ -20,6 +22,21 @@ export class ResumesService {
     });
   }
 
+  async getResume(id: string, userId: string) {
+    const resume = await this.prisma.resume.findUnique({
+      where: { id },
+      include: {
+        jobSeekerProfile: true
+      }
+    });
+
+    if (!resume || resume.jobSeekerProfile.userId !== userId) {
+      throw new NotFoundException('Resume not found');
+    }
+
+    return resume;
+  }
+
   async parseResume(file: Express.Multer.File, userId: string) {
     try {
       const data = await pdfParse(file.buffer);
@@ -28,7 +45,7 @@ export class ResumesService {
       // Send to AI service for structured parsing
       // Assume AI service is running on localhost:8000
       const aiResponse = await firstValueFrom(
-        this.httpService.post('http://localhost:8000/ai/parse-resume', { text: rawText })
+        this.httpService.post(`${this.fastApiUrl}/parse-resume`, { text: rawText })
       );
 
       return aiResponse.data;
@@ -82,7 +99,7 @@ export class ResumesService {
 
     try {
       const aiResponse = await firstValueFrom(
-        this.httpService.post('http://localhost:8000/ai/optimize-ats', {
+        this.httpService.post(`${this.fastApiUrl}/optimize-ats`, {
           resume: resume,
           jobDescription: jobDescription
         })
@@ -96,8 +113,13 @@ export class ResumesService {
   }
 
   async exportPdf(id: string, userId: string): Promise<Buffer> {
-    const resume = await this.prisma.resume.findUnique({ where: { id } });
-    if (!resume) throw new NotFoundException('Resume not found');
+    const resume = await this.prisma.resume.findUnique({
+      where: { id },
+      include: { jobSeekerProfile: true }
+    });
+    if (!resume || resume.jobSeekerProfile.userId !== userId) {
+      throw new NotFoundException('Resume not found');
+    }
 
     // Generate HTML for professional template
     const html = this.generateHtmlTemplate(resume);
@@ -105,7 +127,8 @@ export class ResumesService {
     // Launch puppeteer
     const browser = await puppeteer.launch({
       headless: true,
-      args: ['--no-sandbox', '--disable-setuid-sandbox'],
+      executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
+      args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
     });
     const page = await browser.newPage();
     await page.setContent(html, { waitUntil: 'load' });
@@ -124,6 +147,19 @@ export class ResumesService {
 
     await browser.close();
     return Buffer.from(pdfBuffer);
+  }
+
+  async exportWord(id: string, userId: string): Promise<Buffer> {
+    const resume = await this.prisma.resume.findUnique({
+      where: { id },
+      include: { jobSeekerProfile: true }
+    });
+    if (!resume || resume.jobSeekerProfile.userId !== userId) {
+      throw new NotFoundException('Resume not found');
+    }
+
+    const html = this.generateHtmlTemplate(resume);
+    return Buffer.from(html, 'utf-8');
   }
 
   private generateHtmlTemplate(resume: any): string {

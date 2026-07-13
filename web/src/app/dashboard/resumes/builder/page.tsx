@@ -14,7 +14,7 @@ function ResumeBuilder() {
   const [resume, setResume] = useState({
     title: 'Untitled Resume',
     summary: '',
-    personalInfo: { firstName: '', lastName: '', email: '', phone: '' },
+    personalInfo: { firstName: '', lastName: '', email: '', phone: '', city: '' },
     experience: [],
     education: [],
     skills: []
@@ -117,6 +117,20 @@ function ResumeBuilder() {
               rows={8}
             />
           </div>
+
+          <div className="space-y-4 pt-4">
+            <h3 className="text-lg font-semibold flex items-center gap-2 border-b pb-2"><FileText className="w-4 h-4"/> Education</h3>
+            <p className="text-sm text-gray-500">Edit education JSON (Raw view for demo purposes):</p>
+            <Textarea 
+              value={JSON.stringify(resume.education, null, 2)} 
+              onChange={e => {
+                try {
+                  setResume({...resume, education: JSON.parse(e.target.value)});
+                } catch(err) {}
+              }}
+              rows={6}
+            />
+          </div>
         </div>
         
         <div className="space-y-6">
@@ -136,6 +150,26 @@ function ResumeBuilder() {
               placeholder="Email" 
               value={resume.personalInfo?.email || ''} 
               onChange={e => setResume({...resume, personalInfo: {...resume.personalInfo, email: e.target.value}})}
+            />
+            <Input 
+              placeholder="Phone" 
+              value={resume.personalInfo?.phone || ''} 
+              onChange={e => setResume({...resume, personalInfo: {...resume.personalInfo, phone: e.target.value}})}
+            />
+            <Input 
+              placeholder="City / Town" 
+              value={resume.personalInfo?.city || ''} 
+              onChange={e => setResume({...resume, personalInfo: {...resume.personalInfo, city: e.target.value}})}
+            />
+          </div>
+
+          <div className="space-y-4 pt-4">
+            <h3 className="text-lg font-semibold border-b pb-2">Skills</h3>
+            <p className="text-xs text-gray-500">Comma-separated list (e.g. React, Node.js, Python)</p>
+            <Input 
+              placeholder="Skills (comma separated)" 
+              value={Array.isArray(resume.skills) ? resume.skills.join(', ') : ''} 
+              onChange={e => setResume({...resume, skills: e.target.value.split(',').map(s => s.trim())})}
             />
           </div>
         </div>
