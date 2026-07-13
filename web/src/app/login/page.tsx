@@ -21,7 +21,18 @@ export default function LoginPage() {
       });
 
       if (!res.ok) {
-        throw new Error('Invalid email or password');
+        let errMsg = 'Invalid email or password';
+        try {
+          const errData = await res.json();
+          if (errData && errData.message) {
+            errMsg = errData.message;
+          }
+        } catch (_) {
+          if (res.status >= 500) {
+            errMsg = 'Server connection error. Please try again later.';
+          }
+        }
+        throw new Error(errMsg);
       }
 
       const data = await res.json();

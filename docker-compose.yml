@@ -18,8 +18,8 @@ services:
     ports:
       - "3001:3001"
     environment:
-      DATABASE_URL: postgresql://postgres:password@db:5432/jobhub?schema=public
-      JWT_SECRET: dev_secret
+      DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:password@db:5432/jobhub?schema=public}
+      JWT_SECRET: ${JWT_SECRET:-dev_secret}
     depends_on:
       - db
 

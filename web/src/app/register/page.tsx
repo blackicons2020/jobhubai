@@ -22,7 +22,18 @@ export default function RegisterPage() {
       });
 
       if (!res.ok) {
-        throw new Error('Registration failed. Please try again.');
+        let errMsg = 'Registration failed. Please try again.';
+        try {
+          const errData = await res.json();
+          if (errData && errData.message) {
+            errMsg = errData.message;
+          }
+        } catch (_) {
+          if (res.status >= 500) {
+            errMsg = 'Server connection error. Please try again later.';
+          }
+        }
+        throw new Error(errMsg);
       }
 
       // Redirect to login page for sign in
