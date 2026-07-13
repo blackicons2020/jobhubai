@@ -15,9 +15,9 @@ function ResumeBuilder() {
     title: 'Untitled Resume',
     summary: '',
     personalInfo: { firstName: '', lastName: '', email: '', phone: '', city: '' },
-    experience: [],
-    education: [],
-    skills: []
+    experience: [] as any[],
+    education: [] as any[],
+    skills: [] as string[]
   });
 
   const [isSaving, setIsSaving] = useState(false);
