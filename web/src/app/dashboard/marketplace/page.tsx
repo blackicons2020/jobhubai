@@ -7,30 +7,52 @@ import { Briefcase, MapPin, DollarSign, Zap } from 'lucide-react';
 
 export default function MarketplacePage() {
   const [jobs, setJobs] = useState([]);
+  const [resumes, setResumes] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   
   useEffect(() => {
-    fetch('/api/jobs/marketplace')
+    const token = localStorage.getItem('token');
+    fetch('/api/jobs/marketplace', {
+      headers: { 'Authorization': `Bearer ${token}` }
+    })
       .then(res => res.json())
       .then(data => {
-        setJobs(data);
+        if (Array.isArray(data)) {
+          setJobs(data);
+        }
         setLoading(false);
       })
       .catch(err => {
         console.error(err);
         setLoading(false);
       });
+
+    fetch('/api/resumes', {
+      headers: { 'Authorization': `Bearer ${token}` }
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data)) {
+          setResumes(data);
+        }
+      })
+      .catch(console.error);
   }, []);
 
   const handleOneTapApply = async (jobId: string) => {
-    // In a full implementation, we'd open a modal to select the specific Resume ID.
-    // For now, we mock picking the first resume.
-    const mockResumeId = 'default-resume-id'; 
+    if (resumes.length === 0) {
+      alert('Please create a resume in the Resumes tab first before using One-Tap Apply.');
+      return;
+    }
+    const resumeId = resumes[0].id; 
     try {
       const res = await fetch(`/api/applications/${jobId}/one-tap`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ resumeId: mockResumeId })
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({ resumeId })
       });
       if (res.ok) {
         alert('Applied successfully with One-Tap! (Included: CV, Cover Letter, Portfolio, Certificates)');

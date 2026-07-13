@@ -9,10 +9,21 @@ export default function InternshipsPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch('/api/jobs/internships')
+    const token = localStorage.getItem('token');
+    fetch('/api/jobs/internships', {
+      headers: { 'Authorization': `Bearer ${token}` }
+    })
       .then(res => res.json())
-      .then(data => { setJobs(data); setLoading(false); })
-      .catch(console.error);
+      .then(data => { 
+        if (Array.isArray(data)) {
+          setJobs(data); 
+        }
+        setLoading(false); 
+      })
+      .catch(err => {
+        console.error(err);
+        setLoading(false);
+      });
   }, []);
 
   return (
